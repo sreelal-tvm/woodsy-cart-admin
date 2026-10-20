@@ -1,0 +1,347 @@
+@if (o(); as o) {
+  <nav class="fs-7 mb-2"><a routerLink="/orders">Orders</a> <i class="bi bi-chevron-right text-quiet mx-1"></i> <span class="text-muted">#{{ o.orderNumber }}</span></nav>
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <h2 class="page-title">Order <span class="text-muted">#{{ o.orderNumber }}</span></h2>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span [class]="o.status | statusColor">{{ o.status | humanize }}</span>
+        <span [class]="o.paymentStatus | statusColor">{{ o.paymentStatus | humanize }}</span>
+        <span class="text-muted fs-7">{{ o.createdAt | date: 'dd MMM yyyy, h:mm a' }} · {{ o.paymentMethod === 'CashOnDelivery' ? 'Cash on delivery' : (o.paymentMethod | humanize) }}</span>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      @for (s of o.nextStatuses; track s) {
+        <button class="btn btn-sm" [class.btn-primary]="s !== 'Cancelled'" [class.btn-outline-danger]="s === 'Cancelled'" (click)="openStatus(s)">
+          <i class="bi {{ statusIcon(s) }} me-1"></i>{{ s === 'PlacedWithVendor' ? 'Mark placed with vendor' : 'Mark ' + (s | humanize | lowercase) }}
+        </button>
+      }
+      <button class="btn btn-sm btn-phoenix-secondary" (click)="modal.set('note')"><i class="bi bi-chat-square-text me-1"></i>Add note</button>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-xl-8">
+      <!-- Items -->
+      <div class="card mb-3">
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead><tr><th>Product</th><th class="text-end">Price</th><th class="text-end">Qty</th><th class="text-end">Total</th><th class="text-end" title="What you pay the vendor, including GST">Vendor cost</th><th></th></tr></thead>
+            <tbody>
+              @for (i of o.items; track i.id) {
+                <tr>
+                  <td>
+                    <div class="d-flex gap-2 align-items-center">
+                      <img class="thumb" [src]="i.imageUrl | media" alt="" />
+                      <div class="min-w-0">
+                        <a class="fw-bold d-block text-truncate" style="max-width: 320px" [routerLink]="['/products', i.productId]">{{ i.productName }}</a>
+                        @if (i.variantName) { <span class="text-muted fs-7">{{ i.variantName }}</span> }
+                        <div class="text-quiet fs-8">HSN {{ i.hsnCode || '—' }} · GST {{ i.gstRate }}% @if (i.vendorProductId) { · Vendor #{{ i.vendorProductId }} }</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-end">{{ i.unitPrice | inr }}@if (i.unitMrp > i.unitPrice) { <div class="text-quiet fs-8 text-decoration-line-through">{{ i.unitMrp | inr }}</div> }</td>
+                  <td class="text-end">{{ i.quantity }}</td>
+                  <td class="text-end fw-bold">{{ i.lineTotal | inr }}</td>
+                  <td class="text-end text-muted">{{ i.unitVendorCost * i.quantity | inr }}
+                    @if (i.unitVendorPrice && i.unitVendorCost > i.unitVendorPrice) { <div class="fs-8">{{ i.unitVendorPrice * i.quantity | inr }} + {{ i.gstRate }}% GST</div> }</td>
+                  <td class="text-end">@if (i.vendorUrl) { <a [href]="i.vendorUrl" target="_blank" rel="noopener" title="Open on vendor site"><i class="bi bi-box-arrow-up-right"></i></a> }</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Vendor / drop-ship -->
+      <div class="card mb-3">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <h5 class="mb-0"><i class="bi bi-shop-window me-2 text-primary"></i>Vendor fulfilment</h5>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-soft-primary" (click)="loadVendorMessage()"><i class="bi bi-whatsapp me-1"></i>WhatsApp message</button>
+            <button class="btn btn-sm btn-phoenix-secondary" (click)="poPdf()"><i class="bi bi-file-earmark-pdf me-1"></i>PO PDF</button>
+            <button class="btn btn-sm btn-phoenix-secondary" (click)="openPo()"><i class="bi bi-pencil me-1"></i>{{ o.purchaseOrder ? 'Edit PO' : 'Create PO' }}</button>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (o.purchaseOrder; as po) {
+            <div class="row g-3 fs-7">
+              <div class="col-sm-3"><div class="text-muted">PO number</div><div class="fw-bold">{{ po.poNumber }}</div></div>
+              <div class="col-sm-3"><div class="text-muted">Vendor</div><div class="fw-bold">{{ po.vendorName }}</div></div>
+              <div class="col-sm-2"><div class="text-muted">Status</div><span [class]="po.status | statusColor">{{ po.status }}</span></div>
+              <div class="col-sm-2"><div class="text-muted">Expected cost</div><div class="fw-bold">{{ po.expectedCost | inr }}</div></div>
+              <div class="col-sm-2"><div class="text-muted">Vendor ref</div><div class="fw-bold">{{ po.vendorReference || '—' }}</div></div>
+              @if (po.expectedDispatchDate) { <div class="col-sm-4"><div class="text-muted">Expected dispatch</div><div class="fw-bold">{{ po.expectedDispatchDate | date: 'dd MMM yyyy' }}</div></div> }
+              @if (po.notes) { <div class="col-12 text-muted">{{ po.notes }}</div> }
+            </div>
+          } @else {
+            <p class="text-muted mb-0 fs-7">No purchase order yet. Send the order to the vendor on WhatsApp, then mark it <b>placed with vendor</b> — a PO is created automatically.</p>
+          }
+          @if (vendorMessage(); as m) {
+            <div class="mt-3 border rounded p-3 bg-body-tertiary">
+              <pre class="mb-2 fs-7" style="white-space: pre-wrap; font-family: inherit">{{ m.text }}</pre>
+              <div class="d-flex gap-2">
+                <a class="btn btn-sm btn-success" [href]="m.whatsAppUrl" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i>Open WhatsApp</a>
+                <button class="btn btn-sm btn-phoenix-secondary" (click)="copyMessage()"><i class="bi bi-clipboard me-1"></i>Copy</button>
+              </div>
+              @if (!o.purchaseOrder?.vendorWhatsApp) { <div class="text-muted fs-8 mt-2">Tip: add the vendor's WhatsApp number in Vendor settings to open their chat directly.</div> }
+            </div>
+          }
+
+          <hr />
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Vendor bills</h6>
+            <button class="btn btn-sm btn-soft-primary" (click)="openBill()"><i class="bi bi-plus me-1"></i>Add vendor bill</button>
+          </div>
+          @for (b of o.vendorBills; track b.id) {
+            <div class="d-flex flex-wrap justify-content-between align-items-center border rounded px-3 py-2 mb-2 fs-7">
+              <span><b>{{ b.billNumber }}</b> · {{ b.billDate | date: 'dd MMM yyyy' }}</span>
+              <span>Taxable {{ b.taxableAmount | inr }} · Total <b>{{ b.totalAmount | inr }}</b></span>
+              <span [class]="b.paymentStatus | statusColor">{{ b.paymentStatus | humanize }}</span>
+              @if (b.fileUrl) { <a [href]="b.fileUrl | media" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i> File</a> }
+            </div>
+          } @empty { <p class="text-muted fs-7 mb-0">No vendor bill recorded yet. Profit for this order is estimated from the vendor's listed price.</p> }
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0">Timeline</h5></div>
+        <div class="card-body">
+          <ul class="timeline">
+            @for (h of o.history; track h.id) {
+              <li>
+                <span class="dot"></span>
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                  <span class="fw-bold">{{ h.status | humanize }}</span>
+                  <span class="text-muted fs-8">{{ h.createdAt | date: 'dd MMM, h:mm a' }} · {{ h.createdBy || 'System' }}</span>
+                </div>
+                @if (h.note) { <div class="fs-7">{{ h.note }}</div> }
+                @if (!h.visibleToCustomer) { <span class="badge-soft badge-soft-secondary mt-1">Internal</span> }
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <!-- Summary -->
+      <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Summary</h5></div>
+        <div class="card-body fs-7">
+          <div class="d-flex justify-content-between mb-2"><span class="text-muted">Items subtotal</span><span>{{ o.subTotal | inr: true }}</span></div>
+          @if (o.discount) { <div class="d-flex justify-content-between mb-2"><span class="text-muted">Discount {{ o.couponCode ? '(' + o.couponCode + ')' : '' }}</span><span class="text-danger">−{{ o.discount | inr: true }}</span></div> }
+          <div class="d-flex justify-content-between mb-2"><span class="text-muted">Delivery</span><span>{{ o.shippingFee ? (o.shippingFee | inr: true) : 'Free' }}</span></div>
+          @if (o.codFee) { <div class="d-flex justify-content-between mb-2"><span class="text-muted">COD fee</span><span>{{ o.codFee | inr: true }}</span></div> }
+          <div class="d-flex justify-content-between mb-2"><span class="text-muted">GST included</span><span>{{ o.taxAmount | inr: true }}</span></div>
+          <div class="d-flex justify-content-between border-top pt-2 mb-2 fs-6 fw-bold"><span>Total</span><span>{{ o.total | inr: true }}</span></div>
+          <div class="d-flex justify-content-between mb-1"><span class="text-muted">Payment</span><span>{{ o.paymentMethod | humanize }}{{ o.paymentProvider ? ' · ' + (o.paymentProvider === 'DirectUpi' ? 'Direct UPI' : (o.paymentProvider | humanize)) : '' }}</span></div>
+          @if (o.upiAmount && o.paymentStatus !== 'Paid') { <div class="d-flex justify-content-between mb-1"><span class="text-muted">UPI amount to receive</span><span class="fw-bold">{{ o.upiAmount | inr: true }}</span></div> }
+          @if (o.customerUtr) { <div class="d-flex justify-content-between mb-1"><span class="text-muted">Customer's UTR</span><span class="font-monospace">{{ o.customerUtr }}</span></div> }
+          <div class="d-flex justify-content-between mb-1"><span class="text-muted">Paid</span><span class="text-success fw-bold">{{ o.amountPaid | inr: true }}</span></div>
+          @if (o.total - o.amountPaid > 0 && o.status !== 'Cancelled') {
+            <div class="d-flex justify-content-between"><span class="text-muted">Balance due</span><span class="text-danger fw-bold">{{ o.total - o.amountPaid | inr: true }}</span></div>
+          }
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-sm btn-soft-primary flex-fill" (click)="openPayment()"><i class="bi bi-cash me-1"></i>Record payment</button>
+            @if (o.amountPaid > 0) { <button class="btn btn-sm btn-phoenix-secondary flex-fill" (click)="openRefund()"><i class="bi bi-arrow-counterclockwise me-1"></i>Refund</button> }
+          </div>
+        </div>
+      </div>
+
+      <!-- Profit -->
+      <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between"><h5 class="mb-0">Profit</h5>
+          <span class="badge-soft" [class.badge-soft-success]="o.costIsActual" [class.badge-soft-warning]="!o.costIsActual">{{ o.costIsActual ? 'Actual' : 'Estimated' }}</span></div>
+        <div class="card-body fs-7">
+          <div class="d-flex justify-content-between mb-2"><span class="text-muted">Revenue (ex-GST)</span><span>{{ o.total - o.taxAmount | inr: true }}</span></div>
+          <div class="d-flex justify-content-between mb-2"><span class="text-muted">Vendor cost {{ o.costIsActual ? '(bill)' : '(listed price)' }}</span><span>{{ (o.costIsActual ? o.actualCost : o.total - o.taxAmount - o.estimatedProfit) | inr: true }}</span></div>
+          <div class="d-flex justify-content-between border-top pt-2 fw-bold fs-6" [class.text-success]="o.estimatedProfit >= 0" [class.text-danger]="o.estimatedProfit < 0">
+            <span>Gross profit</span><span>{{ o.estimatedProfit | inr: true }} <span class="fs-7">({{ margin(o) }}%)</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice -->
+      <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Customer invoice</h5></div>
+        <div class="card-body fs-7">
+          @for (inv of o.invoices; track inv.id) {
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span><b>{{ inv.invoiceNumber }}</b> · {{ inv.invoiceDate | date: 'dd MMM yyyy' }} @if (inv.isCancelled) { <span class="badge-soft badge-soft-secondary">Cancelled</span> }</span>
+              <button class="btn btn-sm btn-phoenix-secondary" (click)="invoicePdf(inv.id, inv.invoiceNumber)"><i class="bi bi-download"></i></button>
+            </div>
+          }
+          @if (!hasActiveInvoice(o)) {
+            <p class="text-muted">Invoices are generated automatically on delivery. You can also create one now.</p>
+            <button class="btn btn-sm btn-primary" [disabled]="o.status === 'Cancelled'" (click)="generateInvoice()"><i class="bi bi-file-earmark-plus me-1"></i>Generate invoice</button>
+          }
+        </div>
+      </div>
+
+      <!-- Customer -->
+      <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Customer</h5></div>
+        <div class="card-body fs-7">
+          <a class="fw-bold d-block" [routerLink]="['/customers', o.userId]">{{ o.customerName }}</a>
+          <div class="text-muted">{{ o.customerEmail }}</div>
+          @if (o.customerPhone) { <div class="text-muted">{{ o.customerPhone }}</div> }
+          <hr />
+          <h6>Shipping address</h6>
+          <div>{{ o.shipName }} · <a [href]="'tel:' + o.shipPhone">{{ o.shipPhone }}</a></div>
+          <div class="text-muted">{{ o.shipLine1 }}@if (o.shipLine2) {, {{ o.shipLine2 }}}</div>
+          @if (o.shipLandmark) { <div class="text-muted">Landmark: {{ o.shipLandmark }}</div> }
+          <div class="text-muted">{{ o.shipCity }}, {{ o.shipState }} – {{ o.shipPincode }}</div>
+          @if (o.customerGstin) { <div class="mt-1">GSTIN: <b>{{ o.customerGstin }}</b></div> }
+          @if (o.trackingNumber) { <hr /><div>Tracking: <b>{{ o.courierName }} {{ o.trackingNumber }}</b></div> }
+          <hr />
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <h6 class="mb-0">Delivery date</h6>
+            @if (canChangeDate(o)) {
+              <button class="btn btn-sm btn-phoenix-secondary" (click)="openDeliveryDate()"><i class="bi bi-calendar-event me-1"></i>{{ o.expectedDeliveryDate ? 'Change' : 'Set' }}</button>
+            }
+          </div>
+          @if (o.deliveredAt) { <div>Delivered {{ o.deliveredAt | date: 'EEE, d MMM yyyy' }}</div> }
+          @else if (o.expectedDeliveryDate) { <div class="fw-bold">Expected {{ o.expectedDeliveryDate | date: 'EEE, d MMM yyyy' }}</div> }
+          @else { <div class="text-muted">Not set</div> }
+          @if (o.originalDeliveryDate && o.originalDeliveryDate !== o.expectedDeliveryDate) {
+            <div class="text-warning fs-8 mt-1"><i class="bi bi-clock-history me-1"></i>Originally promised {{ o.originalDeliveryDate | date: 'EEE, d MMM' }}</div>
+          }
+          @if (o.deliveryDateReason) { <div class="text-muted fs-8">Reason given: {{ o.deliveryDateReason }}</div> }
+          @if (o.customerNotes) { <div class="alert alert-warning py-2 mt-2 mb-0">Customer note: {{ o.customerNotes }}</div> }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0">Internal notes</h5></div>
+        <div class="card-body">
+          <textarea class="form-control form-control-sm mb-2" rows="3" [(ngModel)]="adminNotes" placeholder="Only visible to your team"></textarea>
+          <button class="btn btn-sm btn-phoenix-secondary" (click)="saveAdminNotes()">Save notes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  @switch (modal()) {
+    @case ('status') {
+      <wc-modal [title]="'Update status: ' + (statusForm.status | humanize)" (closed)="modal.set('')">
+        @if (statusForm.status === 'Dispatched') {
+          <div class="row g-2 mb-3">
+            <div class="col-6"><label class="form-label">Courier / transporter</label><input class="form-control" [(ngModel)]="statusForm.courierName" placeholder="Vendor's own delivery" /></div>
+            <div class="col-6"><label class="form-label">Tracking / LR no.</label><input class="form-control" [(ngModel)]="statusForm.trackingNumber" /></div>
+            <div class="col-6"><label class="form-label">Expected delivery</label><input type="date" class="form-control" [(ngModel)]="statusForm.expectedDeliveryDate" /></div>
+          </div>
+        }
+        @if (statusForm.status === 'Delivered' && o.amountPaid < o.total) {
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="cod" [(ngModel)]="statusForm.collectCod" />
+            <label class="form-check-label" for="cod">Balance of {{ o.total - o.amountPaid | inr }} was collected on delivery</label>
+          </div>
+        }
+        <label class="form-label">{{ statusForm.status === 'Cancelled' ? 'Cancellation reason' : 'Message' }}</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="statusForm.note" placeholder="Optional — a sensible default message is used"></textarea>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="vis" [(ngModel)]="statusForm.visibleToCustomer" />
+          <label class="form-check-label" for="vis">Show to customer &amp; email them</label>
+        </div>
+        @if (statusForm.status === 'Cancelled' && o.amountPaid > 0) { <div class="alert alert-warning py-2 mt-3 mb-0 fs-7">A refund of {{ o.amountPaid | inr }} will be created for processing.</div> }
+        <ng-container footer>
+          <button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button>
+          <button class="btn" [class.btn-danger]="statusForm.status === 'Cancelled'" [class.btn-primary]="statusForm.status !== 'Cancelled'" [disabled]="busy()" (click)="saveStatus()">Confirm</button>
+        </ng-container>
+      </wc-modal>
+    }
+    @case ('payment') {
+      <wc-modal title="Record payment" (closed)="modal.set('')">
+        <div class="row g-2">
+          <div class="col-6"><label class="form-label">Method</label>
+            <select class="form-select" [(ngModel)]="paymentForm.method">
+              <option value="Upi">UPI</option><option value="BankTransfer">Bank transfer</option><option value="CashOnDelivery">Cash</option><option value="Razorpay">Razorpay</option>
+            </select></div>
+          <div class="col-6"><label class="form-label">Amount</label><input type="number" class="form-control" [(ngModel)]="paymentForm.amount" /></div>
+          <div class="col-6"><label class="form-label">Date</label><input type="date" class="form-control" [(ngModel)]="paymentForm.paidAt" /></div>
+          <div class="col-6"><label class="form-label">Reference / UTR</label><input class="form-control" [(ngModel)]="paymentForm.reference" /></div>
+          <div class="col-12"><label class="form-label">Notes</label><input class="form-control" [(ngModel)]="paymentForm.notes" /></div>
+        </div>
+        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button><button class="btn btn-primary" (click)="savePayment()">Save payment</button></ng-container>
+      </wc-modal>
+    }
+    @case ('po') {
+      <wc-modal title="Purchase order" (closed)="modal.set('')">
+        <div class="row g-2">
+          <div class="col-6"><label class="form-label">Vendor</label>
+            <select class="form-select" [(ngModel)]="poForm.vendorId">@for (v of vendors(); track v.id) { <option [ngValue]="v.id">{{ v.name }}</option> }</select></div>
+          <div class="col-6"><label class="form-label">Status</label>
+            <select class="form-select" [(ngModel)]="poForm.status">@for (s of ['Draft', 'Sent', 'Accepted', 'Dispatched', 'Delivered', 'Cancelled']; track s) { <option [value]="s">{{ s }}</option> }</select></div>
+          <div class="col-6"><label class="form-label">Agreed cost (₹)</label><input type="number" class="form-control" [(ngModel)]="poForm.expectedCost" /></div>
+          <div class="col-6"><label class="form-label">Vendor order ref</label><input class="form-control" [(ngModel)]="poForm.vendorReference" /></div>
+          <div class="col-6"><label class="form-label">Expected dispatch</label><input type="date" class="form-control" [(ngModel)]="poForm.expectedDispatchDate" /></div>
+          <div class="col-12"><label class="form-label">Notes for vendor</label><textarea class="form-control" rows="2" [(ngModel)]="poForm.notes"></textarea></div>
+        </div>
+        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button><button class="btn btn-primary" (click)="savePo()">Save</button></ng-container>
+      </wc-modal>
+    }
+    @case ('bill') {
+      <wc-modal title="Add vendor bill" (closed)="modal.set('')">
+        <div class="row g-2">
+          <div class="col-6"><label class="form-label">Bill number</label><input class="form-control" [(ngModel)]="billForm.billNumber" /></div>
+          <div class="col-6"><label class="form-label">Bill date</label><input type="date" class="form-control" [(ngModel)]="billForm.billDate" /></div>
+          <div class="col-4"><label class="form-label">Taxable value</label><input type="number" class="form-control" [(ngModel)]="billForm.taxableAmount" /></div>
+          <div class="col-4"><label class="form-label">GST</label><input type="number" class="form-control" [(ngModel)]="billForm.gstAmount" /></div>
+          <div class="col-4"><label class="form-label">Delivery charges</label><input type="number" class="form-control" [(ngModel)]="billForm.shippingCharges" /></div>
+          <div class="col-12 fs-7 text-muted">Bill total: <b>{{ billForm.taxableAmount + billForm.gstAmount + billForm.shippingCharges | inr: true }}</b></div>
+          <div class="col-12"><label class="form-label">Attach bill (PDF / photo)</label><input type="file" class="form-control" accept=".pdf,image/*" (change)="uploadBillFile($event)" /></div>
+          <div class="col-12"><label class="form-label">Notes</label><input class="form-control" [(ngModel)]="billForm.notes" /></div>
+        </div>
+        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button><button class="btn btn-primary" [disabled]="!billForm.billNumber" (click)="saveBill()">Save bill</button></ng-container>
+      </wc-modal>
+    }
+    @case ('refund') {
+      <wc-modal title="Create refund" (closed)="modal.set('')">
+        <div class="row g-2">
+          <div class="col-6"><label class="form-label">Type</label>
+            <select class="form-select" [(ngModel)]="refundForm.type"><option value="Partial">Partial</option><option value="Return">Return</option><option value="Cancellation">Cancellation</option></select></div>
+          <div class="col-6"><label class="form-label">Amount</label><input type="number" class="form-control" [(ngModel)]="refundForm.amount" /></div>
+          <div class="col-12"><label class="form-label">Reason</label><input class="form-control" [(ngModel)]="refundForm.reason" /></div>
+        </div>
+        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button><button class="btn btn-primary" [disabled]="!refundForm.reason" (click)="saveRefund()">Create</button></ng-container>
+      </wc-modal>
+    }
+    @case ('delivery') {
+      <wc-modal title="Change delivery date" (closed)="modal.set('')">
+        <div class="row g-2 mb-3">
+          <div class="col-6"><label class="form-label">Current date</label>
+            <div class="form-control-plaintext fw-bold">{{ o.expectedDeliveryDate ? (o.expectedDeliveryDate | date: 'EEE, d MMM yyyy') : 'Not set' }}</div></div>
+          <div class="col-6"><label class="form-label">New expected date</label>
+            <input type="date" class="form-control" [(ngModel)]="deliveryForm.date" [min]="todayIso()" /></div>
+        </div>
+        <label class="form-label">Reason {{ isLater() ? '(required — shown to the customer)' : '(optional, shown to the customer)' }}</label>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          @for (r of delayReasons; track r) {
+            <button type="button" class="btn btn-sm" [class.btn-primary]="deliveryForm.reason === r" [class.btn-phoenix-secondary]="deliveryForm.reason !== r" (click)="deliveryForm.reason = r">{{ r.split(' ').slice(0, 4).join(' ') }}…</button>
+          }
+        </div>
+        <textarea class="form-control" rows="3" [(ngModel)]="deliveryForm.reason" placeholder="e.g. The vendor needs 5 more days to finish the polish."></textarea>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="dn" [(ngModel)]="deliveryForm.notify" />
+          <label class="form-check-label" for="dn">Email the customer{{ o.shipEmail ? ' (' + o.shipEmail + ')' : '' }}</label>
+        </div>
+        <div class="form-text">The new date and reason also appear on the customer's order page and tracking.</div>
+        <ng-container footer>
+          <button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button>
+          <button class="btn btn-primary" [disabled]="!deliveryForm.date || (isLater() && !deliveryForm.reason.trim()) || busy()" (click)="saveDeliveryDate()">Save date</button>
+        </ng-container>
+      </wc-modal>
+    }
+    @case ('note') {
+      <wc-modal title="Add note" (closed)="modal.set('')">
+        <textarea class="form-control" rows="3" [(ngModel)]="noteForm.note"></textarea>
+        <div class="form-check mt-2"><input class="form-check-input" type="checkbox" id="nv" [(ngModel)]="noteForm.visibleToCustomer" /><label class="form-check-label" for="nv">Visible to customer</label></div>
+        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button><button class="btn btn-primary" [disabled]="!noteForm.note" (click)="saveNote()">Add</button></ng-container>
+      </wc-modal>
+    }
+  }
+} @else {
+  <div class="skeleton" style="height: 480px"></div>
+}

@@ -1,0 +1,258 @@
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+  <div>
+    <h2 class="page-title">E-commerce dashboard</h2>
+    <p class="page-subtitle mb-0">Here's what's going on at WoodsyCart right now</p>
+  </div>
+  <select class="form-select form-select-sm w-auto" [(ngModel)]="range" (ngModelChange)="range.set($event); load()">
+    <option value="7">Last 7 days</option>
+    <option value="30">Last 30 days</option>
+    <option value="90">Last 90 days</option>
+    <option value="365">Last 12 months</option>
+  </select>
+</div>
+
+@if (data(); as d) {
+  <!-- Action strip -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <a class="kpi" routerLink="/orders" [queryParams]="{ status: 'Pending' }">
+        <span class="kpi-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></span>
+        <span><span class="kpi-value d-block">{{ d.actions.ordersToConfirm }}</span><span class="kpi-label">Orders to confirm</span></span>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a class="kpi" routerLink="/orders" [queryParams]="{ status: 'Confirmed' }">
+        <span class="kpi-icon bg-primary-subtle text-primary"><i class="bi bi-send"></i></span>
+        <span><span class="kpi-value d-block">{{ d.actions.ordersToPlaceWithVendor }}</span><span class="kpi-label">To place with vendor</span></span>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a class="kpi" routerLink="/orders" [queryParams]="{ view: 'transit' }">
+        <span class="kpi-icon bg-info-subtle text-info"><i class="bi bi-truck"></i></span>
+        <span><span class="kpi-value d-block">{{ d.actions.ordersInTransit }}</span><span class="kpi-label">In production / transit</span></span>
+      </a>
+    </div>
+    <div class="col-6 col-md-3">
+      <a class="kpi" routerLink="/products" [queryParams]="{ status: 'price-changed' }">
+        <span class="kpi-icon bg-danger-subtle text-danger"><i class="bi bi-currency-rupee"></i></span>
+        <span><span class="kpi-value d-block">{{ d.actions.priceChangedProducts }}</span><span class="kpi-label">Vendor price changes</span></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <!-- Total sales -->
+    <div class="col-xl-8">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <h4 class="mb-1">Total sales</h4>
+              <p class="text-muted fs-7 mb-0">Order value in the selected period vs the previous one</p>
+            </div>
+            <div class="text-end">
+              <div class="kpi-value">{{ d.kpis.sales | inr }}</div>
+              @if (d.kpis.sales | delta: d.kpis.prevSales; as delta) {
+                <span class="fs-7" [class.delta-up]="delta >= 0" [class.delta-down]="delta < 0">
+                  <i class="bi" [class.bi-arrow-up-right]="delta >= 0" [class.bi-arrow-down-right]="delta < 0"></i> {{ delta }}%
+                </span>
+              }
+            </div>
+          </div>
+          <wc-chart [option]="salesChart()" height="300px" />
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="col-xl-4">
+      <div class="row g-3 h-100">
+        <div class="col-6 col-xl-12">
+          <div class="card h-100"><div class="card-body">
+            <div class="d-flex justify-content-between"><span class="kpi-label">Total orders</span><span class="badge-soft badge-soft-primary">{{ d.kpis.orders | delta: d.kpis.prevOrders }}%</span></div>
+            <div class="kpi-value mt-2">{{ d.kpis.orders }}</div>
+            <div class="text-muted fs-7">Avg order value {{ d.kpis.avgOrderValue | inr }}</div>
+          </div></div>
+        </div>
+        <div class="col-6 col-xl-12">
+          <div class="card h-100"><div class="card-body">
+            <div class="d-flex justify-content-between"><span class="kpi-label">New customers</span><span class="badge-soft badge-soft-success">{{ d.kpis.newCustomers | delta: d.kpis.prevNewCustomers }}%</span></div>
+            <div class="kpi-value mt-2">{{ d.kpis.newCustomers }}</div>
+            <div class="text-muted fs-7">{{ d.totalCustomers }} customers in total</div>
+          </div></div>
+        </div>
+        <div class="col-12">
+          <div class="card h-100"><div class="card-body">
+            <div class="d-flex justify-content-between"><span class="kpi-label">Estimated gross profit</span><span class="badge-soft badge-soft-info">{{ d.kpis.estimatedProfit | delta: d.kpis.prevEstimatedProfit }}%</span></div>
+            <div class="kpi-value mt-2" [class.text-danger]="d.kpis.estimatedProfit < 0">{{ d.kpis.estimatedProfit | inr }}</div>
+            <div class="text-muted fs-7">Sales (ex-GST) minus vendor cost · <a routerLink="/profit-loss">Full P&amp;L</a></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Festival offers -->
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-stars me-1 text-warning"></i>Festival offers</h5>
+      <a class="fs-7" routerLink="/offers">{{ d.offers?.length ? 'Manage offers' : 'Create an offer' }} <i class="bi bi-chevron-right"></i></a>
+    </div>
+    <div class="card-body">
+      @if (d.offers?.length) {
+        <div class="row g-3">
+          @for (o of d.offers; track o.id) {
+            <div class="col-md-6 col-xl-4">
+              <div class="border rounded-3 p-3 h-100">
+                <div class="rounded-pill mb-2" style="height: 4px" [style.background]="o.themeColor"></div>
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div class="fw-bold">{{ o.name }}</div>
+                  <span [class]="'badge-soft ' + offerStatusClass(o.status)">{{ offerStatusLabel(o.status) }}</span>
+                </div>
+                <div class="text-muted fs-8 mb-2">{{ offerTiming(o) }} · {{ o.startsAt | date: 'd MMM' }} – {{ o.endsAt | date: 'd MMM' }}</div>
+                <div class="row g-2 fs-7">
+                  <div class="col-6"><div class="text-muted fs-8">Orders</div><b>{{ o.stats.orders }}</b> <span class="text-muted fs-8">({{ o.stats.units }} items)</span></div>
+                  <div class="col-6"><div class="text-muted fs-8">Sales</div><b>{{ o.stats.revenue | inr }}</b></div>
+                  <div class="col-6"><div class="text-muted fs-8">Discount given</div><b>{{ o.stats.discountGiven | inr }}</b></div>
+                  <div class="col-6"><div class="text-muted fs-8">Margin</div><b [class.text-danger]="o.stats.margin < 0">{{ o.stats.margin | inr }}</b></div>
+                </div>
+                @if (o.status === 'live') { <div class="fs-8 text-success mt-2"><i class="bi bi-tag me-1"></i>{{ o.productsOnOffer }} products on offer now</div> }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="text-muted fs-7">No offers running or coming up. Plan your next festival sale (Diwali, Onam, Christmas…) — it starts and ends by itself.</div>
+      }
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Sales by category</h5></div>
+        <div class="card-body">
+          @if (d.salesByCategory.length) { <wc-chart [option]="categoryChart()" height="280px" /> }
+          @else { <div class="empty-state"><i class="bi bi-bar-chart"></i>No sales in this period yet</div> }
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Payment methods</h5></div>
+        <div class="card-body">
+          @if (d.paymentMethods.length) { <wc-chart [option]="paymentChart()" height="260px" /> }
+          @else { <div class="empty-state"><i class="bi bi-credit-card"></i>No payments yet</div> }
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Order status</h5></div>
+        <div class="card-body">
+          @if (d.statusBreakdown.length) { <wc-chart [option]="statusChart()" height="260px" /> }
+          @else { <div class="empty-state"><i class="bi bi-pie-chart"></i>No orders yet</div> }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-xl-8">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Latest orders</h5>
+          <a routerLink="/orders" class="fs-7 fw-bold">View all <i class="bi bi-chevron-right"></i></a>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Payment</th><th>Status</th><th class="text-end">Total</th></tr></thead>
+            <tbody>
+              @for (o of d.recentOrders; track o.id) {
+                <tr>
+                  <td><a class="fw-bold" [routerLink]="['/orders', o.id]">#{{ o.orderNumber }}</a></td>
+                  <td>{{ o.customer }}<div class="text-muted fs-8">{{ o.city }}</div></td>
+                  <td class="text-muted">{{ o.createdAt | date: 'dd MMM, h:mm a' }}</td>
+                  <td><span [class]="o.paymentStatus | statusColor">{{ o.paymentStatus | humanize }}</span></td>
+                  <td><span [class]="o.status | statusColor">{{ o.status | humanize }}</span></td>
+                  <td class="text-end fw-bold">{{ o.total | inr }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="6"><div class="empty-state"><i class="bi bi-bag"></i>Orders will appear here as soon as customers check out.</div></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Needs your attention</h5></div>
+        <div class="list-group list-group-flush">
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" routerLink="/vendor-bills" [queryParams]="{ status: 'Unpaid' }">
+            <span><i class="bi bi-receipt me-2 text-danger"></i>Unpaid vendor bills</span>
+            <span class="fw-bold">{{ d.actions.unpaidVendorBills }} · {{ d.actions.unpaidVendorAmount | inr }}</span>
+          </a>
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" routerLink="/orders" [queryParams]="{ view: 'no-invoice' }">
+            <span><i class="bi bi-file-earmark-text me-2 text-primary"></i>Delivered without invoice</span><span class="fw-bold">{{ d.actions.deliveredWithoutInvoice }}</span>
+          </a>
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" routerLink="/orders" [queryParams]="{ view: 'cod-due' }">
+            <span><i class="bi bi-cash-coin me-2 text-warning"></i>Payment to collect</span><span class="fw-bold">{{ d.actions.codToCollect }}</span>
+          </a>
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" routerLink="/refunds">
+            <span><i class="bi bi-arrow-counterclockwise me-2 text-danger"></i>Returns & refunds open</span><span class="fw-bold">{{ d.actions.pendingRefunds }}</span>
+          </a>
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" routerLink="/products" [queryParams]="{ status: 'unavailable' }">
+            <span><i class="bi bi-box me-2 text-secondary"></i>Out of stock at vendor</span><span class="fw-bold">{{ d.actions.unavailableActiveProducts }}</span>
+          </a>
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" routerLink="/enquiries">
+            <span><i class="bi bi-chat-left-text me-2 text-info"></i>New enquiries</span><span class="fw-bold">{{ d.actions.newEnquiries }}</span>
+          </a>
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" routerLink="/reviews">
+            <span><i class="bi bi-star me-2 text-warning"></i>Reviews to moderate</span><span class="fw-bold">{{ d.actions.pendingReviews }}</span>
+          </a>
+        </div>
+        <div class="card-footer bg-transparent text-muted fs-7">{{ d.activeProducts }} products live on the store</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Top products</h5></div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Revenue</th></tr></thead>
+            <tbody>
+              @for (p of d.topProducts; track p.name) {
+                <tr><td class="text-truncate" style="max-width: 320px">{{ p.name }}</td><td class="text-end">{{ p.count }}</td><td class="text-end fw-bold">{{ p.value | inr }}</td></tr>
+              } @empty { <tr><td colspan="3" class="text-muted text-center py-4">No sales yet</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header"><h5 class="mb-0">Top areas</h5></div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead><tr><th>Area (pincode)</th><th class="text-end">Orders</th><th class="text-end">Revenue</th></tr></thead>
+            <tbody>
+              @for (a of d.topAreas; track a.name) {
+                <tr><td>{{ a.name }}</td><td class="text-end">{{ a.count }}</td><td class="text-end fw-bold">{{ a.value | inr }}</td></tr>
+              } @empty { <tr><td colspan="3" class="text-muted text-center py-4">No orders yet</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="row g-3">
+    @for (i of [1, 2, 3, 4]; track i) { <div class="col-md-3"><div class="skeleton" style="height: 70px"></div></div> }
+    <div class="col-12"><div class="skeleton" style="height: 360px"></div></div>
+  </div>
+}

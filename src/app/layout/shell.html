@@ -1,0 +1,62 @@
+<aside class="wc-sidebar" [class.collapsed]="collapsed()" [class.open]="mobileOpen()">
+  <div class="brand">
+    <a routerLink="/dashboard" class="d-flex align-items-center gap-2">
+      <img src="logo.svg" alt="" width="30" height="30" />
+      <span class="brand-text">woodsy<span class="text-primary">cart</span></span>
+    </a>
+  </div>
+  <nav class="nav-scroll">
+    @for (g of nav; track g.title) {
+      <div class="nav-group">
+        <p class="nav-group-title">{{ g.title }}</p>
+        @for (i of g.items; track i.link) {
+          <a class="nav-item-link" [routerLink]="i.link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: i.link === '/products' }" [title]="i.label">
+            <i class="bi {{ i.icon }}"></i><span class="label">{{ i.label }}</span>
+          </a>
+        }
+      </div>
+    }
+  </nav>
+  <button class="collapse-btn d-none d-lg-flex" (click)="toggleCollapse()">
+    <i class="bi" [class.bi-arrow-bar-left]="!collapsed()" [class.bi-arrow-bar-right]="collapsed()"></i>
+    <span class="label">Collapsed view</span>
+  </button>
+</aside>
+@if (mobileOpen()) { <div class="sidebar-backdrop d-lg-none" (click)="mobileOpen.set(false)"></div> }
+
+<header class="wc-topbar" [class.collapsed]="collapsed()">
+  <button class="btn btn-icon btn-phoenix-secondary d-lg-none me-2" (click)="mobileOpen.set(true)" aria-label="Menu"><i class="bi bi-list"></i></button>
+  <form class="search-box flex-grow-1 me-3" style="max-width: 420px" (ngSubmit)="doSearch()">
+    <i class="bi bi-search"></i>
+    <input class="form-control form-control-sm rounded-pill" name="q" [(ngModel)]="search" placeholder="Search products or order no…" />
+  </form>
+  <div class="ms-auto d-flex align-items-center gap-2">
+    <a class="btn btn-sm btn-phoenix-secondary d-none d-md-inline-flex align-items-center gap-1" [href]="storefrontUrl" target="_blank" rel="noopener">
+      <i class="bi bi-shop"></i> View store
+    </a>
+    <button class="btn btn-icon btn-phoenix-secondary rounded-circle" (click)="toggleTheme()" [title]="dark() ? 'Light mode' : 'Dark mode'">
+      <i class="bi" [class.bi-moon-stars]="!dark()" [class.bi-sun]="dark()"></i>
+    </button>
+    <div class="position-relative">
+      <button class="avatar" (click)="userMenu.set(!userMenu())">{{ initials() }}</button>
+      @if (userMenu()) {
+        <div class="dropdown-menu show end-0 mt-2 p-0 shadow-sm" style="min-width: 220px; right: 0; left: auto">
+          <div class="p-3 border-bottom">
+            <div class="fw-bold">{{ auth.user()?.fullName }}</div>
+            <div class="text-muted fs-7">{{ auth.user()?.email }}</div>
+          </div>
+          <a class="dropdown-item py-2" routerLink="/settings" (click)="userMenu.set(false)"><i class="bi bi-gear me-2"></i>Settings</a>
+          <button class="dropdown-item py-2 text-danger" (click)="auth.logout()"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button>
+        </div>
+      }
+    </div>
+  </div>
+</header>
+
+<main class="wc-main" [class.collapsed]="collapsed()" (click)="userMenu.set(false)">
+  <router-outlet />
+  <footer class="text-muted fs-7 pt-4 pb-2 d-flex justify-content-between">
+    <span>WoodsyCart Admin · Bengaluru</span>
+    <span>v1.0</span>
+  </footer>
+</main>

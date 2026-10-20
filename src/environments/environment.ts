@@ -1,0 +1,5 @@
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.woodsycart.in',
+  storefrontUrl: 'https://woodsycart.in'
+};

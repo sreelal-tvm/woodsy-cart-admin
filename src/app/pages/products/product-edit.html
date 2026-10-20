@@ -1,0 +1,220 @@
+@if (p(); as p) {
+  <nav class="fs-7 mb-2"><a routerLink="/products">Products</a> <i class="bi bi-chevron-right text-quiet mx-1"></i> <span class="text-muted">{{ p.id ? 'Edit' : 'Add product' }}</span></nav>
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div class="min-w-0">
+      <h2 class="page-title text-truncate" style="max-width: 760px">{{ p.id ? p.name : 'Add a product' }}</h2>
+      <p class="page-subtitle mb-0">
+        @if (p.source === 'Vendor') { Imported from vendor · item #{{ p.vendorProductId }} · last synced {{ p.lastSyncedAt | date: 'dd MMM, h:mm a' }} }
+        @else { Products added manually aren't touched by vendor sync. }
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      @if (p.id) {
+        <a class="btn btn-phoenix-secondary btn-sm" [href]="storefront + '/product/' + p.slug" target="_blank" rel="noopener"><i class="bi bi-eye me-1"></i>View</a>
+        @if (p.vendorUrl) { <a class="btn btn-phoenix-secondary btn-sm" [href]="p.vendorUrl" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>Vendor page</a> }
+        <button class="btn btn-outline-danger btn-sm" (click)="remove()"><i class="bi bi-trash"></i></button>
+      }
+      <button class="btn btn-primary btn-sm" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : (p.id ? 'Save changes' : 'Publish product') }}</button>
+    </div>
+  </div>
+
+  @if (p.vendorPriceChanged) {
+    <div class="alert alert-warning d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-exclamation-triangle me-2"></i>The vendor changed this product's price from <b>{{ p.previousVendorPrice | inr }}</b> to <b>{{ p.vendorPrice | inr }}</b>. Your selling price was recalculated automatically.</span>
+    </div>
+  }
+
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <div class="mb-4">
+        <h5>Product title</h5>
+        <input class="form-control" [(ngModel)]="p.name" placeholder="Write title here…" />
+      </div>
+      <div class="mb-4">
+        <h5>Product description</h5>
+        <textarea class="form-control" rows="7" [(ngModel)]="p.description" placeholder="Highlights — one per line"></textarea>
+        <details class="mt-2">
+          <summary class="fs-7 text-muted cursor-pointer">Rich description (HTML)</summary>
+          <textarea class="form-control font-monospace fs-7 mt-2" rows="5" [(ngModel)]="p.descriptionHtml"></textarea>
+        </details>
+      </div>
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Display images</h5>
+          @if (p.id) {
+            <label class="btn btn-sm btn-soft-primary mb-0"><i class="bi bi-upload me-1"></i>Upload<input type="file" class="d-none" multiple accept="image/*,video/mp4" (change)="upload($event)" /></label>
+          }
+        </div>
+        @if (!p.id) { <div class="border rounded p-4 text-center text-muted fs-7">Save the product first, then upload images.</div> }
+        <div class="d-flex flex-wrap gap-2">
+          @for (img of p.images; track img.id; let i = $index) {
+            <div class="position-relative border rounded p-1" style="width: 120px">
+              @if (img.mediaType === 3) {
+                <div class="d-flex align-items-center justify-content-center bg-body-tertiary rounded" style="height: 110px"><i class="bi bi-play-circle fs-2"></i></div>
+              } @else {
+                <img [src]="(img.thumbnailUrl || img.url) | media" class="w-100 rounded" style="height: 110px; object-fit: cover" alt="" loading="lazy" />
+              }
+              <div class="d-flex justify-content-between mt-1">
+                <button class="btn btn-sm p-0 px-1" [disabled]="i === 0" (click)="moveImage(img, -1)"><i class="bi bi-arrow-left"></i></button>
+                @if (i === 0) { <span class="badge-soft badge-soft-primary">Cover</span> }
+                @if (img.variantId) { <span class="badge-soft badge-soft-info">Variant</span> }
+                <button class="btn btn-sm p-0 px-1 text-danger" (click)="removeImage(img)"><i class="bi bi-trash"></i></button>
+                <button class="btn btn-sm p-0 px-1" [disabled]="i === p.images.length - 1" (click)="moveImage(img, 1)"><i class="bi bi-arrow-right"></i></button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header pb-0 border-0">
+          <ul class="nav nav-underline">
+            <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'pricing'" (click)="tab.set('pricing')">Pricing</a></li>
+            <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'options'" (click)="tab.set('options')">Options &amp; colours</a></li>
+            <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'details'" (click)="tab.set('details')">Furniture details</a></li>
+            <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'seo'" (click)="tab.set('seo')">SEO</a></li>
+          </ul>
+        </div>
+        <div class="card-body">
+          @switch (tab()) {
+            @case ('pricing') {
+              <div class="row g-3">
+                <div class="col-md-4"><label class="form-label">Vendor MRP (₹)</label><input type="number" class="form-control" [(ngModel)]="p.vendorMrp" (change)="calc()" /></div>
+                <div class="col-md-4"><label class="form-label">Vendor price (₹)</label><input type="number" class="form-control" [(ngModel)]="p.vendorPrice" (change)="calc()" />
+                  <div class="form-text">{{ p.vendorPricesIncludeGst ? 'Including GST' : 'Before GST — vendor adds GST on top' }}</div></div>
+                <div class="col-md-4"><label class="form-label">GST %</label>
+                  <select class="form-select" [(ngModel)]="p.gstRate" (change)="calc()">@for (g of [0, 5, 12, 18, 28]; track g) { <option [ngValue]="g">{{ g }}%</option> }</select></div>
+                @if (preview(); as pr) {
+                  <div class="col-12">
+                    <div class="fs-7 border rounded px-3 py-2">
+                      @if (pr.includesGst) { Your cost: <b>{{ pr.cost | inr: true }}</b> (vendor price already includes {{ pr.gstRate }}% GST) }
+                      @else { Vendor price {{ p.vendorPrice | inr: true }} + {{ pr.gstRate }}% GST {{ pr.gstAmount | inr: true }} = <b>your cost {{ pr.cost | inr: true }}</b> }
+                    </div>
+                  </div>
+                }
+                <div class="col-md-6">
+                  <label class="form-label">Commission % (override)</label>
+                  <input type="number" class="form-control" [(ngModel)]="p.commissionPercentOverride" (change)="calc()" placeholder="Uses category / default" />
+                  <div class="form-text">Currently applied: {{ preview()?.commission ?? p.effectiveCommission }}%</div>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="manual" [(ngModel)]="p.manualPrice" />
+                    <label class="form-check-label" for="manual">Set selling price manually</label>
+                  </div>
+                </div>
+                @if (p.manualPrice) {
+                  <div class="col-md-6"><label class="form-label">MRP shown (₹)</label><input type="number" class="form-control" [(ngModel)]="p.mrp" /></div>
+                  <div class="col-md-6"><label class="form-label">Selling price (₹)</label><input type="number" class="form-control" [(ngModel)]="p.sellingPrice" /></div>
+                } @else if (preview(); as pr) {
+                  <div class="col-12">
+                    <div class="border rounded p-3 d-flex flex-wrap gap-4 bg-body-tertiary">
+                      <div><div class="text-muted fs-7">Selling price</div><div class="fs-5 fw-bold">{{ pr.selling | inr }}</div></div>
+                      <div><div class="text-muted fs-7">MRP shown</div><div class="fs-5 fw-bold text-decoration-line-through text-muted">{{ pr.mrp | inr }}</div></div>
+                      <div><div class="text-muted fs-7">Your margin</div><div class="fs-5 fw-bold text-success">{{ pr.margin | inr }}</div></div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <h6 class="mt-4 mb-2">Variants</h6>
+              @if (p.variants.length) {
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle">
+                    <thead><tr><th>Variant</th><th class="text-end">Vendor price{{ p.vendorPricesIncludeGst ? '' : ' (+GST)' }}</th><th class="text-end">Price</th><th class="text-center">In stock</th><th class="text-center">Active</th><th></th></tr></thead>
+                    <tbody>
+                      @for (v of p.variants; track $index) {
+                        <tr [class.opacity-50]="!v.isActive">
+                          <td><input class="form-control form-control-sm" [(ngModel)]="v.name" [readonly]="p.source === 'Vendor' && !!v.id" />
+                            @if (v.options?.length) { <div class="text-muted fs-8 mt-1">{{ v.options!.join(' · ') }}</div> }
+                            @if (v.isCopy) { <div class="fs-8 text-primary mt-1"><i class="bi bi-files me-1"></i>Added by you — price follows the vendor variant it was copied from</div> }
+                            @else if (v.vendorName && v.vendorName !== v.name) { <div class="fs-8 text-muted mt-1">Vendor calls it "{{ v.vendorName }}"</div> }</td>
+                          <td style="width: 120px"><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="v.vendorPrice" /></td>
+                          <td style="width: 120px">
+                            @if (p.manualPrice) { <input type="number" class="form-control form-control-sm text-end" [(ngModel)]="v.sellingPrice" /> }
+                            @else { <div class="text-end fw-bold">{{ v.sellingPrice | inr }}</div> }
+                          </td>
+                          <td class="text-center"><input class="form-check-input" type="checkbox" [(ngModel)]="v.isAvailable" /></td>
+                          <td class="text-center"><input class="form-check-input" type="checkbox" [(ngModel)]="v.isActive" /></td>
+                          <td class="text-end"><button class="btn btn-sm text-danger p-0" (click)="removeVariant(v)"><i class="bi bi-x-lg"></i></button></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else { <p class="text-muted fs-7">No variants — this product is sold as a single item.</p> }
+              <button class="btn btn-sm btn-phoenix-secondary" (click)="addVariant()"><i class="bi bi-plus me-1"></i>Add variant</button>
+            }
+            @case ('options') {
+              @if (p.id) { <wc-product-options [product]="p" (saved)="optionsSaved($event)" /> }
+              @else { <p class="text-muted fs-7 mb-0">Save the product first, then add its options and colours here.</p> }
+            }
+            @case ('details') {
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Material</label><input class="form-control" [(ngModel)]="p.material" /></div>
+                <div class="col-md-6"><label class="form-label">Dimensions</label><input class="form-control" [(ngModel)]="p.dimensions" placeholder='e.g. 78" L x 60" W x 36" H' /></div>
+                <div class="col-md-6"><label class="form-label">Warranty</label><input class="form-control" [(ngModel)]="p.warranty" /></div>
+                <div class="col-md-3"><label class="form-label">Delivery (days)</label><input type="number" class="form-control" [(ngModel)]="p.deliveryDays" /></div>
+                <div class="col-md-3 d-flex align-items-end"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="asm" [(ngModel)]="p.assemblyIncluded" /><label class="form-check-label" for="asm">Free assembly</label></div></div>
+                <div class="col-md-4"><label class="form-label">SKU</label><input class="form-control" [(ngModel)]="p.sku" /></div>
+                <div class="col-md-4"><label class="form-label">HSN code</label><input class="form-control" [(ngModel)]="p.hsnCode" /></div>
+                <div class="col-md-4"><label class="form-label">GST %</label><div class="form-control-plaintext">{{ p.gstRate }}% <span class="text-muted fs-8">(edit in Pricing)</span></div></div>
+                <div class="col-md-6"><label class="form-label">Brand shown</label><input class="form-control" [(ngModel)]="p.brand" /></div>
+              </div>
+            }
+            @case ('seo') {
+              <div class="mb-3"><label class="form-label">URL slug</label><input class="form-control" [(ngModel)]="p.slug" /></div>
+              <div class="mb-3"><label class="form-label">Meta title</label><input class="form-control" [(ngModel)]="p.metaTitle" [placeholder]="p.name" /></div>
+              <div><label class="form-label">Meta description</label><textarea class="form-control" rows="3" [(ngModel)]="p.metaDescription"></textarea></div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="mb-3">Organise</h5>
+          <div class="mb-3"><label class="form-label">Category</label>
+            <select class="form-select" [(ngModel)]="p.categoryId" (change)="calc()">@for (c of lookups()?.categories ?? []; track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }</select></div>
+          <div class="mb-3"><label class="form-label">Vendor</label>
+            <select class="form-select" [(ngModel)]="p.vendorId"><option [ngValue]="undefined">—</option>@for (v of lookups()?.vendors ?? []; track v.id) { <option [ngValue]="v.id">{{ v.name }}</option> }</select></div>
+          <label class="form-label">Collections</label>
+          <div class="d-flex flex-wrap gap-1 mb-3">
+            @for (c of lookups()?.collections ?? []; track c.id) {
+              <button type="button" class="btn btn-sm py-0 px-2" [class.btn-primary]="p.collectionIds.includes(c.id)" [class.btn-phoenix-secondary]="!p.collectionIds.includes(c.id)" (click)="toggleId(p.collectionIds, c.id)">{{ c.name }}</button>
+            }
+          </div>
+          <label class="form-label">Tags</label>
+          <div class="d-flex flex-wrap gap-1">
+            @for (t of lookups()?.tags ?? []; track t.id) {
+              <button type="button" class="btn btn-sm py-0 px-2" [class.btn-primary]="p.tagIds.includes(t.id)" [class.btn-phoenix-secondary]="!p.tagIds.includes(t.id)" (click)="toggleId(p.tagIds, t.id)">{{ t.name }}</button>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="mb-3">Visibility</h5>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="act" [(ngModel)]="p.isActive" /><label class="form-check-label" for="act">Published on store</label></div>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="avl" [(ngModel)]="p.isAvailable" /><label class="form-check-label" for="avl">In stock</label></div>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="fea" [(ngModel)]="p.isFeatured" /><label class="form-check-label" for="fea">Featured on home page</label></div>
+          @if (p.source === 'Vendor') {
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="lck" [(ngModel)]="p.lockContent" /><label class="form-check-label" for="lck">Lock content (sync updates price &amp; stock only)</label></div>
+          }
+        </div>
+      </div>
+      @if (p.id) {
+        <div class="card">
+          <div class="card-body fs-7">
+            <h5 class="mb-3">Performance</h5>
+            <div class="d-flex justify-content-between mb-1"><span class="text-muted">Units sold</span><b>{{ p.soldCount }}</b></div>
+            <div class="d-flex justify-content-between"><span class="text-muted">Rating</span><b>{{ p.ratingAverage }} ★ ({{ p.ratingCount }})</b></div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
