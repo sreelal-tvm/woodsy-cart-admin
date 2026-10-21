@@ -99,7 +99,7 @@ def md_to_html(md: str) -> str:
                 block.append(lines[i][1:].strip())
                 i += 1
             text = " ".join(block)
-            cls = "warn" if "Watch out" in text else "tip"
+            cls = "warn" if text.startswith("**Watch out") else "tip" if text.startswith("**Tip") else "example"
             out.append(f'<blockquote class="{cls}">{inline(text)}</blockquote>')
             continue
         if re.match(r"^\s*([-*]|\d+\.) ", line):
@@ -166,6 +166,7 @@ li { margin: 2pt 0; }
 blockquote { margin: 9pt 0; padding: 8pt 11pt; border-radius: 6pt; page-break-inside: avoid; }
 blockquote.tip { background: #ecfdf5; border-left: 4px solid #10b981; }
 blockquote.warn { background: #fff7ed; border-left: 4px solid #f97316; }
+blockquote.example { background: #eff6ff; border-left: 4px solid #3b82f6; }
 figure { margin: 9pt 0 12pt; text-align: center; page-break-inside: avoid; }
 figure img { max-width: 100%; max-height: 165mm; border: 1px solid #d1d5db; border-radius: 6pt; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
 figcaption { font-size: 8.5pt; color: #6b7280; margin-top: 3pt; }
@@ -293,7 +294,7 @@ SHOTS = [
     ("26-payments-methods", "/payments", []),
     ("27-payments-providers", "/payments", [click_text(".nav-link", "Providers")]),
     ("28-payments-upi", "/payments", [click_text(".nav-link", "UPI verification"),
-                                      "document.querySelectorAll('input[readonly]').forEach(i => i.value = 'https://api.woodsycart.in/api/payments/upi/alert?key=••••••••••••')"]),
+                                      "document.querySelectorAll('input[readonly]').forEach(i => i.value = 'https://api.woodsycart.com/api/payments/upi/alert?key=••••••••••••')"]),
     ("29-pincodes", "/pincodes", []),
     ("30-settings-business", "/settings", []),
     ("31-settings-pricing", "/settings", [click_text(".nav-link", "Pricing")]),
@@ -338,7 +339,7 @@ async def make_pdf():
         footer = ('<div style="font-size:8px;width:100%;padding:0 14mm;color:#9ca3af;display:flex;justify-content:space-between;font-family:Segoe UI,Arial">'
                   '<span>WoodsyCart Admin — User Guide</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>')
         r = await b.send("Page.printToPDF", printBackground=True, preferCSSPageSize=True, displayHeaderFooter=True,
-                         headerTemplate="<span></span>", footerTemplate=footer, generateDocumentOutline=True, generateTaggedPDF=True)
+                         headerTemplate="<span></span>", footerTemplate=footer, generateDocumentOutline=True)
         open(PDF, "wb").write(base64.b64decode(r["data"]))
     os.remove(tmp)
     print("PDF written:", PDF)

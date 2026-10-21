@@ -32,5 +32,19 @@
     "!/**/*.*",
     "!/**/*__*",
     "!/**/*__*/**"
+  ],
+  "dataGroups": [
+    {
+      "name": "runtime-config",
+      "urls": [
+        "/config.json"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 1,
+        "maxAge": "30d",
+        "timeout": "4s"
+      }
+    }
   ]
 }

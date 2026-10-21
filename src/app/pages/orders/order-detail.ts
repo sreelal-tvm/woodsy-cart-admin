@@ -3,7 +3,7 @@ import { DatePipe, LowerCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
-import { OrderDetail, OrderStatus, PaymentMethod, Vendor } from '../../core/models';
+import { CHANNEL_ICON, CHANNEL_LABEL, OrderDetail, OrderStatus, PaymentMethod, Vendor } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES, isoDate } from '../../shared/pipes';
 import { ModalComponent } from '../../shared/ui';
@@ -75,6 +75,14 @@ export class OrderDetailPage {
       next: o => { this.set(o); this.modal.set(''); this.busy.set(false); this.toast.success('Order updated'); },
       error: () => this.busy.set(false)
     });
+  }
+
+  // ----- Customer message (WhatsApp) -----
+  protected readonly channelIcon = CHANNEL_ICON;
+  protected readonly channelLabel = CHANNEL_LABEL;
+
+  messageCustomer() {
+    this.api.get<{ text: string; whatsAppUrl: string }>(`admin/orders/${this.o()!.id}/customer-message`).subscribe(m => window.open(m.whatsAppUrl, '_blank', 'noopener'));
   }
 
   // ----- Delivery date -----
@@ -162,7 +170,13 @@ export class OrderDetailPage {
   // ----- Payments / invoice / refunds -----
   openPayment() {
     const o = this.o()!;
-    this.paymentForm = { method: 'Upi', amount: Math.max(0, o.total - o.amountPaid), reference: '', paidAt: isoDate(new Date()), notes: '' };
+    // Fill in what's known: the balance, how the customer paid, and the UPI reference (UTR) they gave us.
+    const balance = Math.max(0, Math.round((o.total - o.amountPaid) * 100) / 100);
+    const method = o.paymentMethod === 'Razorpay' ? 'Upi' : o.paymentMethod;
+    this.paymentForm = {
+      method, amount: balance, reference: o.customerUtr ?? '', paidAt: isoDate(new Date()),
+      notes: o.customerUtr ? 'UTR given by the customer' : method === 'CashOnDelivery' ? 'Collected on delivery' : ''
+    };
     this.modal.set('payment');
   }
 

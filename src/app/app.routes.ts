@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardPage), title: 'Dashboard · WoodsyCart' },
       { path: 'orders', loadComponent: () => import('./pages/orders/orders').then(m => m.OrdersPage), title: 'Orders · WoodsyCart' },
+      { path: 'orders/new', loadComponent: () => import('./pages/orders/new-order').then(m => m.NewOrderPage), title: 'New order · WoodsyCart' },
       { path: 'orders/:id', loadComponent: () => import('./pages/orders/order-detail').then(m => m.OrderDetailPage), title: 'Order details · WoodsyCart' },
       { path: 'customers', loadComponent: () => import('./pages/customers/customers').then(m => m.CustomersPage), title: 'Customers · WoodsyCart' },
       { path: 'customers/:id', loadComponent: () => import('./pages/customers/customer-detail').then(m => m.CustomerDetailPage), title: 'Customer details · WoodsyCart' },
@@ -31,6 +32,7 @@ export const routes: Routes = [
       { path: 'profit-loss', loadComponent: () => import('./pages/finance/profit-loss').then(m => m.ProfitLossPage), title: 'Profit & loss · WoodsyCart' },
       { path: 'invoices', loadComponent: () => import('./pages/finance/invoices').then(m => m.InvoicesPage), title: 'Customer invoices · WoodsyCart' },
       { path: 'expenses', loadComponent: () => import('./pages/finance/expenses').then(m => m.ExpensesPage), title: 'Expenses · WoodsyCart' },
+      { path: 'email', loadComponent: () => import('./pages/email-settings').then(m => m.EmailSettingsPage), title: 'Email & notifications · WoodsyCart' },
       { path: 'payments', loadComponent: () => import('./pages/payments').then(m => m.PaymentsPage), title: 'Payment integrations · WoodsyCart' },
       { path: 'pincodes', loadComponent: () => import('./pages/pincodes').then(m => m.PincodesPage), title: 'Delivery pincodes · WoodsyCart' },
       { path: 'settings', loadComponent: () => import('./pages/settings').then(m => m.SettingsPage), title: 'Settings · WoodsyCart' }

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../core/api.service';
 import { ToastService } from '../core/toast.service';
 
-interface ReviewRow { id: number; productId: number; product: string; customer: string; rating: number; title?: string; comment?: string; isApproved: boolean; isVerifiedPurchase: boolean; createdAt: string; }
+interface ReviewRow { id: number; productId: number; product: string; customer: string; orderId?: number; orderNumber?: string; rating: number; title?: string; comment?: string; isApproved: boolean; isVerifiedPurchase: boolean; createdAt: string; }
 
 @Component({
   selector: 'wc-reviews',
@@ -25,7 +25,8 @@ interface ReviewRow { id: number; productId: number; product: string; customer: 
             @for (r of rows(); track r.id) {
               <tr>
                 <td class="text-truncate" style="max-width: 220px"><a [routerLink]="['/products', r.productId]">{{ r.product }}</a></td>
-                <td>{{ r.customer }}@if (r.isVerifiedPurchase) { <div class="fs-8 text-success"><i class="bi bi-patch-check-fill"></i> Verified buyer</div> }</td>
+                <td>{{ r.customer }}@if (r.isVerifiedPurchase) { <div class="fs-8 text-success"><i class="bi bi-patch-check-fill"></i> Verified buyer</div> }
+                  @if (r.orderId) { <a class="fs-8" [routerLink]="['/orders', r.orderId]">Order {{ r.orderNumber }}</a> }</td>
                 <td class="text-warning text-nowrap">@for (s of [1, 2, 3, 4, 5]; track s) { <i class="bi" [class.bi-star-fill]="s <= r.rating" [class.bi-star]="s > r.rating"></i> }</td>
                 <td class="fs-7"><b>{{ r.title }}</b> {{ r.comment }}</td>
                 <td class="text-muted text-nowrap">{{ r.createdAt | date: 'dd MMM yyyy' }}</td>

@@ -52,13 +52,13 @@ Version 1.0 · October 2026 · For WoodsyCart owners and staff
 
 ### 1.1 Signing in
 
-Open the Admin app in your browser (on the live server: `https://admin.woodsycart.in`). Enter your email and password and press **Sign in**.
+Open the Admin app in your browser (on the live server: `https://admin.woodsycart.com`). Enter your email and password and press **Sign in**.
 
 ![Sign-in screen](images/01-login.png)
 
 - Only team members added under **Business settings → Team** can sign in. Customer accounts can't.
 - You stay signed in for **12 hours**. After that you're asked to sign in again; nothing you saved is lost.
-- Forgot your password? Ask another Admin to reset it in **Business settings → Team** (see [25.5](#255-team-tab)).
+- Forgot your password? Ask another Admin to reset it in **Business settings → Team** (see [25.6](#256-team--security-tab)).
 
 ### 1.2 The screen layout
 
@@ -88,7 +88,7 @@ WoodsyCart is a **drop-shipping** store. You don't keep stock. You sell the vend
 ### 2.1 The life of an order
 
 ```
- Customer orders on woodsycart.in  ─►  Pays (UPI / card / …)
+ Customer orders on woodsycart.com  ─►  Pays (UPI / card / …)
           │
           ▼
  1. PENDING ── you check the order and payment ──► 2. CONFIRMED
@@ -380,6 +380,24 @@ The number in brackets after a tab is how many orders are in that status.
 
 Click any row to open the order.
 
+### 5.4 New order (Instagram, WhatsApp, Facebook, phone, walk-in)
+
+Press **New order** (top right of Orders) for an order you took outside the website. It becomes a normal order with the same number series, purchase order, invoice, profit and reports.
+
+1. **Where did this order come from?** Instagram, WhatsApp, Facebook, Phone call, Walk-in / showroom or Other, plus an optional **reference** (e.g. the Instagram @handle or chat link).
+2. **Customer:** search an existing customer by mobile, name or email (the last delivery address fills in), or type a new one. **Email is optional**; customers without email are kept by their **mobile number**. The pincode is checked just like at checkout.
+3. **Products:** search and add products, choose the size/colour, set the quantity. The **price fills in from the store** (including any live festival offer). Type a different price for a negotiated deal; it turns red and you get a warning if it's **below your cost**. **Store price** puts it back.
+4. **Summary:** items, **Discount ₹**, **Delivery ₹** (the usual fee fills in; **use usual fee** resets it), **Total**, **Vendor cost** and **Your margin**.
+5. **Payment:**
+   - **Paid in full:** choose how (UPI, bank transfer, cash, card) and add the UTR/reference. The order is created as **Confirmed** and **Paid**.
+   - **Advance received:** enter the advance. The order shows **Partially paid** with the balance due.
+   - **Send a payment link:** the customer pays from their order page (Direct UPI, confirmed automatically). Needs Direct UPI set up in Payment integrations.
+   - **Cash on delivery:** collected when delivered.
+6. Optional **Expected delivery** date, a **note for the customer**, an **internal note** and the customer's **GSTIN**.
+7. **Create order:** the confirmation shows a ready-made message (items, total, delivery date, payment and tracking link). **Send on WhatsApp** opens the customer's chat with it; **Copy message** copies it.
+
+Every order shows its channel (icon on the Orders list, badge on the order page) and who entered it. Use the **All channels** filter on Orders, the **Sales by channel** card on the dashboard, and the Channel column in the P&L export to see which platform sells most. **Message customer** on any order page opens WhatsApp with the same summary.
+
 ---
 
 ## 6. Sales → Order details (one order)
@@ -400,6 +418,7 @@ Click any row to open the order.
 | Out for delivery | **Mark delivered** |
 | Delivered | **Mark returned** |
 
+- **Message customer:** opens WhatsApp with the order summary, payment and tracking link for the customer.
 - **Add note:** adds a message to the timeline. Tick **Visible to customer** to show it on their order page; otherwise it's internal.
 
 ### 6.2 Updating the status (the status window)
@@ -462,7 +481,12 @@ Every step in order, with time, who did it, and the message. Entries marked **In
 | **Paid** | Money received so far |
 | **Balance due** | Total − Paid (shown in red when money is still due) |
 
-- **Record payment:** when money arrives outside the automatic flow (cash, bank transfer, a UPI the system missed). Choose the method, amount, date and **Reference / UTR**. The payment status becomes **Paid** when the full total is received, or **Partially paid** otherwise.
+- **Payments received:** every payment on the order: method (e.g. *Razorpay · Net banking · Bank of Baroda*), amount, date and time, the bank's reference, the gateway payment id and the **gateway fee**. For gateway payments these details come from the gateway itself.
+- **Record payment:** only for money the app couldn't see by itself: cash on delivery, a bank transfer, a UPI payment whose SMS never arrived, an advance or part payment, an extra charge. **Never for gateway (Razorpay) payments**; those are recorded automatically.
+  - The form fills itself in: **Amount** = balance due, **Method** = how the customer paid, **Reference** = the UTR the customer gave.
+  - Always enter the **full amount the customer paid**, not what reached your bank after fees.
+  - If the order is already fully paid, the form says so and won't save an empty amount.
+  - The payment status becomes **Paid** when the full total is received, or **Partially paid** otherwise.
 - **Refund:** appears once money has been received; creates a refund (chapter 8).
 
 ### 6.7 Profit
@@ -476,6 +500,7 @@ The invoice is created automatically when you mark the order **Delivered**. **Ge
 ### 6.9 Customer card and Delivery date
 
 - The customer's name (click for their profile), email, phone, delivery address, GSTIN if given, tracking details and the customer's own **note**.
+- **Open the pinned location in Google Maps** when the customer pinned their location on the map (otherwise **Find the address in Google Maps**).
 - **Delivery date** shows the expected date, and **Change** / **Set** updates it:
   - Pick the **New expected date** (not in the past).
   - Choose a quick **reason** (vendor needs more time, transport delay, festival/holiday, heavy rain, waiting for material) or write your own. A reason is **required** when the date moves later.
@@ -928,7 +953,7 @@ Every delivered order: **Revenue (ex-GST)**, **Cost** (✱ = estimated, no bill 
 
 ![Customer invoices](images/24-invoices.png)
 
-- **Numbering:** `WC/26-27/0001`: your prefix, the **financial year** (April–March), then a running number that restarts each year. Set the prefix in Business settings → Tax & invoice.
+- **Numbering:** `WC/26-27/0001`: your prefix, the **financial year** (April–March), then a running number that restarts each year. Set the prefix in Business settings → GST & invoices.
 - **Tax invoice / Bill of supply:** when you're GST-registered, invoices are *Tax invoices* with GST shown; otherwise they're *Bills of supply* with no tax.
 - **CGST + SGST** (half each) when the customer is in Karnataka, your own state; **IGST** when they're in another state.
 - **When created:** automatically when an order is marked **Delivered**, or with **Generate invoice** on the order.
@@ -947,7 +972,9 @@ Every delivered order: **Revenue (ex-GST)**, **Cost** (✱ = estimated, no bill 
 
 **Add expense:** **Date**, **Category**, **Description**, **Amount (ex-GST)**, **GST**, **Paid to**, **Payment mode**, **Reference**, **Receipt** (PDF/photo). The right panel shows the **Total** and the total per category for the selected filter. Expenses are subtracted in Profit & loss.
 
-> **Tip:** record gateway fees, Google/Instagram ads and hosting every month, or your net profit will look higher than it really is.
+**Gateway fees are added automatically.** For every Razorpay payment, the fee Razorpay deducted becomes an expense (category **Payment gateway fees**, paid to Razorpay, "Deducted from settlement"). It uses Razorpay's own fee and GST figures, not an estimate. Example: a ₹313.86 fee is booked as ₹265.98 + ₹47.88 GST. Once a month, compare the total with Razorpay's monthly invoice; refunds, disputes and adjustments can change it, and each entry can be edited.
+
+> **Tip:** record Google/Instagram ads, hosting and packaging every month, or your net profit will look higher than it really is.
 
 ---
 
@@ -994,6 +1021,43 @@ Secrets are stored encrypted and never shown again; you only see "saved".
 - **Automatic confirmation setup:** the **Forwarding address** for the SMS/notification forwarder app on your phone, with step-by-step instructions. Keep it private; **Generate a new key** if it leaks.
 - **Test a bank SMS:** paste a real "credited" SMS and press **Check how it's read** to confirm the amount and reference are recognised. **Add as a payment alert** is for when your phone was offline when the payment came in.
 
+### 23.4 Email & notifications
+
+*Menu: Settings → Email & notifications.* The banner at the top says whether email is **on** (and which address it sends from) or **off**. While it's off, no emails go out at all.
+
+**Mail server tab**
+- **Send emails:** the main on/off switch.
+- **Email provider:** choose a preset and the server and port fill in, with a short how-to:
+  - **Gmail / Google Workspace:** needs an **App password** (Google Account → Security → 2-Step Verification → App passwords).
+  - **Zoho Mail** (smtp.zoho.in) and **Microsoft 365 / Outlook:** SMTP sending must be allowed; with MFA, use an app password.
+  - **Brevo:** free for 300 emails a day; use the SMTP login and SMTP key.
+  - **Amazon SES (Mumbai)**, **Hostinger email**, or **Other (custom SMTP)**.
+- **SMTP server**, **Port** (587) and **STARTTLS** (on). Port 465 isn't supported; use 587.
+- **Username** and **Password / app password:** the password is stored encrypted and never shown again; leave it empty to keep the saved one.
+- **From email** (usually the same as the username), **From name** (e.g. WoodsyCart), **Reply-to** (where customer replies go).
+- **Admin notification emails:** add as many team addresses as you like; each one gets the admin emails.
+- **Send a test email:** save first, then send a test. You see the mail server's answer straight away (for example "rejected the username or password").
+
+**Notifications tab:** switch each email on or off.
+
+| To customers | To your team |
+|---|---|
+| Order placed (summary, total, delivery date, pay/track button) | New order (website and manual, with channel) |
+| Payment received | Payment received |
+| Order confirmed · Being made · Dispatched (with courier & tracking) · Out for delivery | A customer entered a UPI reference to check |
+| **Delivered, with the invoice PDF attached** | Money received but no order matched |
+| Delivery date changed (new date and reason) | Order cancelled by the customer |
+| Order cancelled (with refund info) | Return requested |
+| Return request received | New enquiry (with a WhatsApp reply button) |
+| Refund processed | Review waiting for approval |
+| Order update note ("Visible to customer" notes) | Vendor sync report (failed, or price changes / new products) |
+| Welcome (new account) | |
+| Enquiry received | |
+
+Customers without an email (e.g. some manual orders) simply get no emails. Status emails go out only when **Visible to customer** is ticked on the status change.
+
+**Sent emails tab:** every email the app tried to send: when, which email, to whom, the subject, and **Sent**, **Failed** (with the mail server's reason) or **Skipped** (email was off). Filter by status, and use **Open order** to jump to the order.
+
 ---
 
 ## 24. Settings → Delivery pincodes
@@ -1004,14 +1068,14 @@ Secrets are stored encrypted and never shown again; you only see "saved".
 
 - **Add pincodes in bulk:** paste pincodes (separated by commas or new lines), set **Delivery days**, **Extra charge ₹** (added to the delivery fee) and **Cash on delivery available**, then **Save pincodes**.
 - **Table:** edit **Area**, **Days**, **Extra ₹**, **COD** and **Active** for each pincode, then press ✔ to save the row; 🗑 deletes it.
-- When **Only deliver to pincodes in the delivery list** is on (Business settings → Checkout), customers with other pincodes can't check out.
+- When **Only deliver to pincodes in the delivery list** is on (Business settings → Delivery & payments), customers with other pincodes can't check out.
 - The customer sees *"Delivery in X–Y days to <Area>"* when they check their pincode.
 
 ---
 
 ## 25. Settings → Business settings
 
-*Menu: Settings → Business settings* (or the profile menu → Settings). Five tabs; press **Save settings** after changes.
+*Menu: Settings → Business settings* (or the profile menu → Settings). Six tabs; press **Save settings** after changes.
 
 ### 25.1 Business tab
 
@@ -1019,17 +1083,17 @@ Secrets are stored encrypted and never shown again; you only see "saved".
 
 **Store name**, **Legal name** (on invoices), **Tagline**, address with **State code** (used for GST: 29 = Karnataka), **Phone**, **WhatsApp** (shown to customers), **Email**, **Website**, **Instagram/Facebook URL**, **Logo for invoices**.
 
-### 25.2 Tax & invoice tab
+### 25.2 GST & invoices tab
 
 **I'm registered under GST** (see chapters 20–21 for what it changes), **GSTIN**, **PAN**, **Invoice prefix**, **Bank details** and **UPI id** printed on invoices, **Invoice terms & conditions**.
 
-### 25.3 Pricing tab
+### 25.3 Pricing & commission tab
 
 ![Pricing settings](images/31-settings-pricing.png)
 
 **Default commission %**, **Price rounding**, **Default GST %**, **Vendor prices already include GST** (leave **off** for GB Furniture), and a live **Example** showing the cost, selling price and margin for a ₹10,000 product. **Saving reprices every product** that doesn't have a manual price.
 
-### 25.4 Checkout tab
+### 25.4 Delivery & payments tab
 
 ![Checkout settings](images/32-settings-checkout.png)
 
@@ -1045,7 +1109,30 @@ Secrets are stored encrypted and never shown again; you only see "saved".
 
 > **Watch out:** furniture is made to order. A refused COD delivery still costs you the vendor's price. Keep the COD limit low.
 
-### 25.5 Team tab
+### 25.5 Maps tab
+
+Lets customers pin their exact delivery location on a Google map at checkout and in My account → Addresses.
+
+- **Let customers pin their location on a map:** switches the map on (only works with a key).
+- **Google Maps API key:** the browser key from Google Cloud. The tab has step-by-step instructions:
+  1. create a project;
+  2. link billing;
+  3. enable **Maps JavaScript API**, **Places API (New)** and **Geocoding API**;
+  4. create the key;
+  5. restrict it to woodsycart.com (and localhost for testing) and to those three APIs;
+  6. set daily quotas and a budget alert so you can never be charged.
+- **What customers get:**
+  - a search box with Google suggestions;
+  - **Use my current location**;
+  - a map where they move the pin onto their gate.
+  - Pincode, city, state and area fill in automatically; they only type the flat number.
+- **What you get:**
+  - the order page shows **Open the pinned location in Google Maps**;
+  - the vendor's WhatsApp message includes the location link, which helps on new layouts and big apartment complexes.
+  - Orders without a pin get an address search link instead.
+- **Cost:** Google's India pricing gives 70,000 free map loads, address lookups and search suggestions every month, enough for about 14,000 checkouts.
+
+### 25.6 Team & security tab
 
 - **Team:** each member's **Name**, **Email**, **Role** (Admin / Staff), **Last login** and **Status**. **Add member** / ✏ to edit; on an existing member, **Reset password (optional)** sets a new password.
 - **Change my password:** your current password and a new one (8+ characters).

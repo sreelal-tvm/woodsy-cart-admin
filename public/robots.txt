@@ -1,0 +1,3 @@
+# WoodsyCart admin: not for search engines
+User-agent: *
+Disallow: /

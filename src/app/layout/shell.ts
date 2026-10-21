@@ -65,6 +65,7 @@ export class ShellComponent {
     {
       title: 'Settings', items: [
         { label: 'Payment integrations', icon: 'bi-credit-card-2-front', link: '/payments' },
+        { label: 'Email & notifications', icon: 'bi-envelope', link: '/email' },
         { label: 'Delivery pincodes', icon: 'bi-geo-alt', link: '/pincodes' },
         { label: 'Business settings', icon: 'bi-gear', link: '/settings' }
       ]

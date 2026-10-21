@@ -19,8 +19,10 @@ import { SHARED_PIPES } from '../shared/pipes';
             <label class="form-label">Pincodes</label>
             <textarea class="form-control mb-2" rows="4" [(ngModel)]="bulk.pincodes" placeholder="560001, 560002, 560003"></textarea>
             <div class="row g-2 mb-2">
-              <div class="col-6"><label class="form-label">Delivery days</label><input type="number" class="form-control" [(ngModel)]="bulk.deliveryDays" /></div>
-              <div class="col-6"><label class="form-label">Extra charge ₹</label><input type="number" class="form-control" [(ngModel)]="bulk.extraCharge" /></div>
+              <div class="col-4"><label class="form-label">Days from</label><input type="number" class="form-control" [(ngModel)]="bulk.deliveryDays" /></div>
+              <div class="col-4"><label class="form-label">Days up to</label><input type="number" class="form-control" [(ngModel)]="bulk.deliveryDaysMax" placeholder="from + 3" /></div>
+              <div class="col-4"><label class="form-label">Extra ₹</label><input type="number" class="form-control" [(ngModel)]="bulk.extraCharge" /></div>
+              <div class="col-12 form-text mt-0">Customers see "Delivery in {{ bulk.deliveryDays }}–{{ bulk.deliveryDaysMax || bulk.deliveryDays + 3 }} days".</div>
             </div>
             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="bc" [(ngModel)]="bulk.codAvailable" /><label class="form-check-label" for="bc">Cash on delivery available</label></div>
             <button class="btn btn-primary w-100" (click)="saveBulk()">Save pincodes</button>
@@ -35,13 +37,14 @@ import { SHARED_PIPES } from '../shared/pipes';
           </div>
           <div class="table-responsive" style="max-height: 640px">
             <table class="table table-sm align-middle">
-              <thead class="sticky-top bg-body"><tr><th>Pincode</th><th>Area</th><th class="text-end">Days</th><th class="text-end">Extra ₹</th><th class="text-center">COD</th><th class="text-center">Active</th><th></th></tr></thead>
+              <thead class="sticky-top bg-body"><tr><th>Pincode</th><th>Area</th><th class="text-end">Days</th><th class="text-end">Up to</th><th class="text-end">Extra ₹</th><th class="text-center">COD</th><th class="text-center">Active</th><th></th></tr></thead>
               <tbody>
                 @for (p of filtered(); track p.id) {
                   <tr>
                     <td class="fw-bold">{{ p.pincode }}</td>
                     <td><input class="form-control form-control-sm" [(ngModel)]="p.area" /></td>
                     <td style="width: 80px"><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="p.deliveryDays" /></td>
+                    <td style="width: 80px"><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="p.deliveryDaysMax" [placeholder]="'' + (p.deliveryDays + 3)" /></td>
                     <td style="width: 90px"><input type="number" class="form-control form-control-sm text-end" [(ngModel)]="p.extraCharge" /></td>
                     <td class="text-center"><input class="form-check-input" type="checkbox" [(ngModel)]="p.codAvailable" /></td>
                     <td class="text-center"><input class="form-check-input" type="checkbox" [(ngModel)]="p.isActive" /></td>
@@ -68,7 +71,7 @@ export class PincodesPage {
     const f = this.filter().toLowerCase();
     return f ? this.rows().filter(p => p.pincode.includes(f) || (p.area ?? '').toLowerCase().includes(f)) : this.rows();
   });
-  bulk = { pincodes: '', deliveryDays: 7, extraCharge: 0, codAvailable: true };
+  bulk = { pincodes: '', deliveryDays: 7, deliveryDaysMax: null as number | null, extraCharge: 0, codAvailable: true };
 
   constructor() { this.load(); }
   load() { this.api.get<Pincode[]>('admin/pincodes').subscribe(r => this.rows.set(r)); }

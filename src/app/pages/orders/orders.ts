@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
-import { OrderRow, Paged } from '../../core/models';
+import { CHANNEL_ICON, CHANNEL_LABEL, OrderRow, Paged, SalesChannel } from '../../core/models';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { PagerComponent } from '../../shared/ui';
 
@@ -15,7 +15,10 @@ interface Tab { key: string; label: string; status?: string; view?: string; }
   template: `
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h2 class="page-title mb-0">Orders</h2>
-      <button class="btn btn-phoenix-secondary btn-sm" (click)="load()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+      <div class="d-flex gap-2">
+        <button class="btn btn-phoenix-secondary btn-sm" (click)="load()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+        <a class="btn btn-primary btn-sm" routerLink="/orders/new"><i class="bi bi-plus-lg me-1"></i>New order</a>
+      </div>
     </div>
 
     <div class="filter-pills mb-3">
@@ -46,6 +49,10 @@ interface Tab { key: string; label: string; status?: string; view?: string; }
         <option value="CashOnDelivery">Cash on delivery</option>
         <option value="Razorpay">Online (older orders)</option>
       </select>
+      <select class="form-select form-select-sm w-auto" [(ngModel)]="channel" (change)="page.set(1); load()">
+        <option value="">All channels</option>
+        @for (c of channelKeys; track c) { <option [value]="c">{{ channelLabel[c] }}</option> }
+      </select>
       <input type="date" class="form-control form-control-sm w-auto" [(ngModel)]="from" (change)="load()" title="From" />
       <input type="date" class="form-control form-control-sm w-auto" [(ngModel)]="to" (change)="load()" title="To" />
     </div>
@@ -62,7 +69,7 @@ interface Tab { key: string; label: string; status?: string; view?: string; }
           <tbody>
             @for (o of rows().items; track o.id) {
               <tr class="cursor-pointer" (click)="open(o.id)">
-                <td><a class="fw-bold" [routerLink]="['/orders', o.id]" (click)="$event.stopPropagation()">#{{ o.orderNumber }}</a>
+                <td><i class="bi {{ channelIcon[o.channel] }} text-muted me-1" [title]="channelLabel[o.channel]"></i><a class="fw-bold" [routerLink]="['/orders', o.id]" (click)="$event.stopPropagation()">#{{ o.orderNumber }}</a>
                   <div class="text-muted fs-8">{{ o.itemCount }} item{{ o.itemCount > 1 ? 's' : '' }}</div></td>
                 <td class="text-end fw-bold">{{ o.total | inr }}</td>
                 <td>{{ o.customer }}<div class="text-muted fs-8">{{ o.phone }} · {{ o.city }} {{ o.pincode }}</div></td>
@@ -111,7 +118,10 @@ export class OrdersPage {
   protected rows = signal<Paged<OrderRow>>({ items: [], total: 0, page: 1, pageSize: 25 });
   protected counts = signal<Record<string, number>>({});
   protected page = signal(1);
-  q = ''; paymentStatus = ''; paymentMethod = ''; from = ''; to = '';
+  q = ''; paymentStatus = ''; paymentMethod = ''; channel = ''; from = ''; to = '';
+  protected readonly channelIcon = CHANNEL_ICON;
+  protected readonly channelLabel = CHANNEL_LABEL;
+  protected readonly channelKeys = Object.keys(CHANNEL_LABEL) as SalesChannel[];
   private current: Tab = this.tabs[0];
 
   constructor() {
@@ -139,7 +149,7 @@ export class OrdersPage {
   load() {
     this.api.get<Paged<OrderRow>>('admin/orders', {
       search: this.q, status: this.current.status, view: this.current.view, paymentStatus: this.paymentStatus,
-      paymentMethod: this.paymentMethod, from: this.from, to: this.to, page: this.page(), pageSize: 25
+      paymentMethod: this.paymentMethod, channel: this.channel, from: this.from, to: this.to, page: this.page(), pageSize: 25
     }).subscribe(r => this.rows.set(r));
   }
 

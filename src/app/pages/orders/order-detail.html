@@ -7,6 +7,7 @@
         <span [class]="o.status | statusColor">{{ o.status | humanize }}</span>
         <span [class]="o.paymentStatus | statusColor">{{ o.paymentStatus | humanize }}</span>
         <span class="text-muted fs-7">{{ o.createdAt | date: 'dd MMM yyyy, h:mm a' }} · {{ o.paymentMethod === 'CashOnDelivery' ? 'Cash on delivery' : (o.paymentMethod | humanize) }}</span>
+        <span class="badge-soft badge-soft-secondary" [title]="o.createdByStaff ? 'Entered by ' + o.createdByStaff : ''"><i class="bi {{ channelIcon[o.channel] }} me-1"></i>{{ channelLabel[o.channel] }}{{ o.channelReference ? ' · ' + o.channelReference : '' }}</span>
       </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
@@ -16,6 +17,7 @@
         </button>
       }
       <button class="btn btn-sm btn-phoenix-secondary" (click)="modal.set('note')"><i class="bi bi-chat-square-text me-1"></i>Add note</button>
+      <button class="btn btn-sm btn-soft-success" (click)="messageCustomer()"><i class="bi bi-whatsapp me-1"></i>Message customer</button>
     </div>
   </div>
 
@@ -142,6 +144,20 @@
           @if (o.total - o.amountPaid > 0 && o.status !== 'Cancelled') {
             <div class="d-flex justify-content-between"><span class="text-muted">Balance due</span><span class="text-danger fw-bold">{{ o.total - o.amountPaid | inr: true }}</span></div>
           }
+          @if (o.payments.length) {
+            <div class="border-top mt-3 pt-2">
+              <div class="fw-bold mb-1">Payments received</div>
+              @for (p of o.payments; track p.id) {
+                <div class="border rounded px-2 py-1 mb-1" [class.opacity-50]="!p.isSuccessful">
+                  <div class="d-flex justify-content-between"><span>{{ p.method | humanize }}</span><b>{{ p.amount | inr: true }}</b></div>
+                  <div class="text-muted fs-8">{{ p.paidAt | date: 'dd MMM yyyy, h:mm a' }}@if (!p.isSuccessful) { · failed }</div>
+                  @if (p.notes) { <div class="text-muted fs-8">{{ p.notes }}</div> }
+                  @if (p.reference) { <div class="fs-8">Bank ref <span class="font-monospace">{{ p.reference }}</span></div> }
+                  @if (p.gatewayPaymentId) { <div class="fs-8 text-muted">Gateway id <span class="font-monospace">{{ p.gatewayPaymentId }}</span></div> }
+                </div>
+              }
+            </div>
+          }
           <div class="d-flex gap-2 mt-3">
             <button class="btn btn-sm btn-soft-primary flex-fill" (click)="openPayment()"><i class="bi bi-cash me-1"></i>Record payment</button>
             @if (o.amountPaid > 0) { <button class="btn btn-sm btn-phoenix-secondary flex-fill" (click)="openRefund()"><i class="bi bi-arrow-counterclockwise me-1"></i>Refund</button> }
@@ -192,6 +208,9 @@
           <div class="text-muted">{{ o.shipLine1 }}@if (o.shipLine2) {, {{ o.shipLine2 }}}</div>
           @if (o.shipLandmark) { <div class="text-muted">Landmark: {{ o.shipLandmark }}</div> }
           <div class="text-muted">{{ o.shipCity }}, {{ o.shipState }} – {{ o.shipPincode }}</div>
+          @if (o.mapUrl) {
+            <a class="d-inline-block mt-1" [href]="o.mapUrl" target="_blank" rel="noopener"><i class="bi bi-geo-alt-fill me-1"></i>{{ o.shipLatitude ? 'Open the pinned location in Google Maps' : 'Find the address in Google Maps' }}</a>
+          }
           @if (o.customerGstin) { <div class="mt-1">GSTIN: <b>{{ o.customerGstin }}</b></div> }
           @if (o.trackingNumber) { <hr /><div>Tracking: <b>{{ o.courierName }} {{ o.trackingNumber }}</b></div> }
           <hr />
@@ -254,17 +273,25 @@
     }
     @case ('payment') {
       <wc-modal title="Record payment" (closed)="modal.set('')">
+        @if (o.total - o.amountPaid <= 0) {
+          <div class="alert alert-subtle-success py-2 fs-7"><i class="bi bi-check-circle me-1"></i>This order is already fully paid ({{ o.amountPaid | inr: true }}
+            @if (o.payments.length) { — {{ o.payments[o.payments.length - 1].notes || (o.payments[o.payments.length - 1].method | humanize) }} }).
+            Only record a payment for something extra, e.g. an additional charge.</div>
+        } @else if (o.amountPaid > 0) {
+          <div class="alert alert-subtle-info py-2 fs-7">{{ o.amountPaid | inr: true }} already received; the balance of {{ o.total - o.amountPaid | inr: true }} is filled in.</div>
+        }
         <div class="row g-2">
           <div class="col-6"><label class="form-label">Method</label>
             <select class="form-select" [(ngModel)]="paymentForm.method">
-              <option value="Upi">UPI</option><option value="BankTransfer">Bank transfer</option><option value="CashOnDelivery">Cash</option><option value="Razorpay">Razorpay</option>
+              <option value="Upi">UPI</option><option value="BankTransfer">Bank transfer</option><option value="CashOnDelivery">Cash</option>
+              <option value="Card">Card</option><option value="NetBanking">Net banking</option><option value="Wallet">Wallet</option><option value="Emi">EMI</option><option value="Razorpay">Online (gateway)</option>
             </select></div>
           <div class="col-6"><label class="form-label">Amount</label><input type="number" class="form-control" [(ngModel)]="paymentForm.amount" /></div>
           <div class="col-6"><label class="form-label">Date</label><input type="date" class="form-control" [(ngModel)]="paymentForm.paidAt" /></div>
           <div class="col-6"><label class="form-label">Reference / UTR</label><input class="form-control" [(ngModel)]="paymentForm.reference" /></div>
           <div class="col-12"><label class="form-label">Notes</label><input class="form-control" [(ngModel)]="paymentForm.notes" /></div>
         </div>
-        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button><button class="btn btn-primary" (click)="savePayment()">Save payment</button></ng-container>
+        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="modal.set('')">Close</button><button class="btn btn-primary" [disabled]="!(paymentForm.amount > 0)" (click)="savePayment()">Save payment</button></ng-container>
       </wc-modal>
     }
     @case ('po') {

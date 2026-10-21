@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
-import { Dashboard, DashboardOffer } from '../../core/models';
+import { CHANNEL_ICON, CHANNEL_LABEL, Dashboard, DashboardOffer, SalesChannel } from '../../core/models';
 import { SHARED_PIPES, isoDate } from '../../shared/pipes';
 import { CHART_COLORS, ChartComponent, ChartOption } from '../../shared/ui';
 
@@ -56,6 +56,13 @@ export class DashboardPage {
     const from = new Date();
     from.setDate(to.getDate() - Number(this.range()) + 1);
     this.api.get<Dashboard>('admin/reports/dashboard', { from: isoDate(from), to: isoDate(to) }).subscribe(d => this.data.set(d));
+  }
+
+  channelIcon(name: string) { return CHANNEL_ICON[name as SalesChannel] ?? 'bi-three-dots'; }
+  channelLabel(name: string) { return CHANNEL_LABEL[name as SalesChannel] ?? name; }
+  channelShare(value: number) {
+    const max = Math.max(...(this.data()?.channels ?? []).map(c => c.value), 1);
+    return Math.round(value / max * 100);
   }
 
   offerStatusLabel(s: DashboardOffer['status']) { return { live: 'Live now', upcoming: 'Scheduled', ended: 'Ended', off: 'Off' }[s]; }

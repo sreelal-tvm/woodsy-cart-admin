@@ -1,5 +1,6 @@
+/** Addresses are not built in: they are read from public/config.json when the app starts (see main.ts). */
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5100',
-  storefrontUrl: 'http://localhost:4200'
+  apiUrl: '',
+  storefrontUrl: ''
 };

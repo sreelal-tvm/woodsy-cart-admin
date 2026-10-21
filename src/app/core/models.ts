@@ -57,8 +57,15 @@ export interface CategoryRow {
 export interface OrderRow {
   id: number; orderNumber: string; createdAt: string; userId: number; customer: string; phone: string; city: string; pincode: string;
   status: OrderStatus; paymentStatus: PaymentStatus; paymentMethod: PaymentMethod; total: number; amountPaid: number; estimatedCost: number;
-  itemCount: number; hasPurchaseOrder: boolean; hasVendorBill: boolean; hasInvoice: boolean;
+  itemCount: number; hasPurchaseOrder: boolean; hasVendorBill: boolean; hasInvoice: boolean; channel: SalesChannel;
 }
+export type SalesChannel = 'Website' | 'Instagram' | 'Facebook' | 'WhatsApp' | 'Phone' | 'WalkIn' | 'Other';
+export const CHANNEL_ICON: Record<SalesChannel, string> = {
+  Website: 'bi-globe', Instagram: 'bi-instagram', Facebook: 'bi-facebook', WhatsApp: 'bi-whatsapp', Phone: 'bi-telephone', WalkIn: 'bi-shop', Other: 'bi-three-dots'
+};
+export const CHANNEL_LABEL: Record<SalesChannel, string> = {
+  Website: 'Website', Instagram: 'Instagram', Facebook: 'Facebook', WhatsApp: 'WhatsApp', Phone: 'Phone call', WalkIn: 'Walk-in / showroom', Other: 'Other'
+};
 
 export interface OrderDetail {
   id: number; orderNumber: string; createdAt: string; status: OrderStatus; paymentStatus: PaymentStatus; paymentMethod: PaymentMethod;
@@ -84,6 +91,8 @@ export interface OrderDetail {
   nextStatuses: OrderStatus[];
   paymentProvider?: string; upiAmount?: number; customerUtr?: string;
   originalDeliveryDate?: string | null; deliveryDateReason?: string | null; deliveryDateChangedAt?: string | null;
+  channel: SalesChannel; channelReference?: string | null; createdByStaff?: string | null;
+  shipLatitude?: number | null; shipLongitude?: number | null; mapUrl?: string | null;
 }
 
 export interface RefundRow {
@@ -142,6 +151,7 @@ export interface Dashboard {
   };
   activeProducts: number; totalCustomers: number;
   offers?: DashboardOffer[];
+  channels?: NameValue[];
 }
 
 export interface ProfitLoss {
@@ -161,7 +171,7 @@ export interface Coupon {
 }
 
 export interface Banner { id: number; title: string; subtitle?: string; imageUrl: string; linkUrl?: string; buttonText?: string; sortOrder: number; isActive: boolean; }
-export interface Pincode { id: number; pincode: string; city: string; area?: string; deliveryDays: number; extraCharge: number; codAvailable: boolean; isActive: boolean; }
+export interface Pincode { id: number; pincode: string; city: string; area?: string; deliveryDays: number; deliveryDaysMax?: number | null; extraCharge: number; codAvailable: boolean; isActive: boolean; }
 
 export interface BusinessSettings {
   id: number; businessName: string; legalName?: string; tagline?: string; gstRegistered: boolean; gstin?: string; pan?: string;
@@ -171,4 +181,5 @@ export interface BusinessSettings {
   shippingFee: number; freeShippingThreshold: number; codEnabled: boolean; codFee: number; codMaxOrderAmount: number;
   restrictToServiceablePincodes: boolean; defaultDeliveryDays: number; instagramUrl?: string; facebookUrl?: string; youtubeUrl?: string;
   createdAt?: string;
+  mapsEnabled: boolean; googleMapsApiKey?: string | null;
 }

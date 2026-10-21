@@ -6,6 +6,7 @@ import { BusinessSettings } from '../core/models';
 import { ToastService } from '../core/toast.service';
 import { SHARED_PIPES } from '../shared/pipes';
 import { ModalComponent } from '../shared/ui';
+import { environment } from '../../environments/environment';
 
 interface Staff { id: number; fullName: string; email: string; phone?: string; role: 'Admin' | 'Staff'; isActive: boolean; lastLoginAt?: string; password?: string; }
 
@@ -87,6 +88,43 @@ interface Staff { id: number; fullName: string; email: string; phone?: string; r
             <div class="col-12"><div class="alert alert-info py-2 fs-7 mb-0">Saving a new commission, rounding or the GST-inclusive switch reprices all products that don't have a manual price.</div></div>
           </div></div></div>
         }
+        @case ('maps') {
+          <div class="row g-3">
+            <div class="col-xl-5">
+              <div class="card"><div class="card-body">
+                <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" id="mp" [(ngModel)]="s.mapsEnabled" />
+                  <label class="form-check-label fw-bold" for="mp">Let customers pin their location on a map</label></div>
+                <label class="form-label">Google Maps API key</label>
+                <input class="form-control font-monospace" [(ngModel)]="s.googleMapsApiKey" placeholder="AIza…" autocomplete="off" />
+                <div class="form-text">This browser key is visible to visitors by design — that's why step 5 restricts it to your website.</div>
+                <div class="border rounded p-3 bg-body-tertiary fs-7 mt-3">
+                  <div class="fw-bold mb-1">What customers get</div>
+                  On the address form at checkout and in My account: <b>search with Google suggestions</b>, <b>Use my current location</b>, and a map with a pin.
+                  Pincode, city, state and area fill in by themselves; the exact point is saved with the order and shown to you (and the vendor) as a Google Maps link.
+                </div>
+                <div class="alert alert-subtle-info py-2 fs-7 mt-3 mb-0"><i class="bi bi-cash-coin me-1"></i>Cost: Google's India pricing gives 70,000 free map loads, address lookups and search suggestions every month — about 14,000 checkouts. Set the caps in step 6 and you can never be charged.</div>
+              </div></div>
+            </div>
+            <div class="col-xl-7">
+              <div class="card"><div class="card-body fs-7">
+                <h5>Set up the key (about 10 minutes)</h5>
+                <ol class="ps-3 mb-0">
+                  <li class="mb-2">Open <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a>, sign in, and create a project named <b>WoodsyCart</b>.</li>
+                  <li class="mb-2"><b>Billing</b> → link a billing account (needs a card; India accounts are billed in ₹). Nothing is charged within the free allowance.</li>
+                  <li class="mb-2"><b>APIs &amp; Services → Library</b> → enable <b>Maps JavaScript API</b>, <b>Places API (New)</b> and <b>Geocoding API</b>.</li>
+                  <li class="mb-2"><b>APIs &amp; Services → Credentials → Create credentials → API key</b>. Copy it into the box on the left.</li>
+                  <li class="mb-2">Edit the key:
+                    <ul class="mt-1">
+                      <li><b>Application restrictions → Websites</b>: add <code>{{ storefront }}/*</code>@if (storefrontWww) {, <code>{{ storefrontWww }}/*</code>} and, for testing, <code>http://localhost:4200/*</code>.</li>
+                      <li><b>API restrictions → Restrict key</b>: tick only the three APIs from step 3.</li>
+                    </ul></li>
+                  <li class="mb-2"><b>Stay free:</b> in <b>APIs &amp; Services → each API → Quotas</b>, set every "…per day" limit to 2,000 (Maps JavaScript: Map loads per day, and 3D Map loads per day to 0; Places API (New): autocomplete and place details; Geocoding: requests) — 2,000 × 31 days stays under the 70,000 free per month, and add a <b>Billing → Budgets &amp; alerts</b> budget of ₹100 with email alerts.</li>
+                  <li>Switch the map on here, <b>Save settings</b>, then open the store's checkout to try it.</li>
+                </ol>
+              </div></div>
+            </div>
+          </div>
+        }
         @case ('checkout') {
           <div class="card"><div class="card-body"><div class="row g-3">
             <div class="col-md-4"><label class="form-label">Delivery fee ₹</label><input type="number" class="form-control" [(ngModel)]="s.shippingFee" /></div>
@@ -148,10 +186,13 @@ interface Staff { id: number; fullName: string; email: string; phone?: string; r
 })
 export class SettingsPage {
   private api = inject(ApiService);
+  /** Live storefront address from config.json (for the Google key's website list). */
+  protected storefront = environment.storefrontUrl;
+  protected storefrontWww = /^https:\/\/(?!www\.)[^/]+$/.test(environment.storefrontUrl) ? environment.storefrontUrl.replace('https://', 'https://www.') : null;
   private toast = inject(ToastService);
   protected tabs = [
     { key: 'business', label: 'Business' }, { key: 'tax', label: 'GST & invoices' }, { key: 'pricing', label: 'Pricing & commission' },
-    { key: 'checkout', label: 'Delivery & payments' }, { key: 'staff', label: 'Team & security' }
+    { key: 'checkout', label: 'Delivery & payments' }, { key: 'maps', label: 'Maps' }, { key: 'staff', label: 'Team & security' }
   ];
   protected tab = signal('business');
   protected s = signal<BusinessSettings | null>(null);

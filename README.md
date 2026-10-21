@@ -24,12 +24,13 @@ Sign in with the admin account created by the API (see the API README).
 
 ## Configuration
 
-`src/environments/environment.development.ts` (dev) and `environment.ts` (production):
+Addresses are read at startup from `public/config.json` (copied next to `index.html` in the build), so the same build runs locally or live. Locally:
 
-```ts
-apiUrl: 'https://api.woodsycart.in',
-storefrontUrl: 'https://woodsycart.in'
+```json
+{ "apiUrl": "http://localhost:5100", "storefrontUrl": "http://localhost:4200" }
 ```
+
+On the server, edit `config.json` in the deployed folder (see the API repo: `docs/deployment/hosting-guide.md`, section 8.1). No rebuild is needed.
 
 ## Build and install as an app
 
