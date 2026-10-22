@@ -138,12 +138,12 @@ export class ProfitLossPage {
   protected chart = computed<ChartOption>(() => {
     const m = this.d()?.monthly ?? [];
     return {
-      color: [CHART_COLORS[0], '#cbd0dd', CHART_COLORS[2], CHART_COLORS[1]],
+      color: [CHART_COLORS[0], '#E2D8CB', CHART_COLORS[2], CHART_COLORS[1]],
       tooltip: { trigger: 'axis', valueFormatter: (v: number) => '₹' + Number(v).toLocaleString('en-IN') },
       legend: { top: 0, icon: 'circle', itemWidth: 8 },
       grid: { left: 8, right: 8, top: 36, bottom: 8, containLabel: true },
-      xAxis: { type: 'category', data: m.map(x => x.month), axisLabel: { color: '#6e7891' } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eff2f6' } }, axisLabel: { color: '#6e7891' } },
+      xAxis: { type: 'category', data: m.map(x => x.month), axisLabel: { color: '#6B5A4E' } },
+      yAxis: { type: 'value', splitLine: { lineStyle: { color: '#F3EEE7' } }, axisLabel: { color: '#6B5A4E' } },
       series: [
         { name: 'Revenue', type: 'bar', barGap: 0, data: m.map(x => x.revenue) },
         { name: 'Vendor cost', type: 'bar', data: m.map(x => x.cogs) },

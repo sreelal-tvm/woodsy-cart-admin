@@ -21,12 +21,12 @@ export class DashboardPage {
     const d = this.data();
     const s = d?.salesSeries ?? [];
     return {
-      color: [CHART_COLORS[0], '#cbd0dd'],
+      color: [CHART_COLORS[0], '#E2D8CB'],
       tooltip: { trigger: 'axis', valueFormatter: (v: number) => '₹' + Number(v).toLocaleString('en-IN') },
       legend: { data: ['This period', 'Previous period'], top: 0, right: 0, icon: 'circle', itemWidth: 8 },
       grid: { left: 8, right: 8, top: 36, bottom: 8, containLabel: true },
-      xAxis: { type: 'category', data: s.map(p => p.label), boundaryGap: false, axisLine: { lineStyle: { color: '#e3e6ed' } }, axisLabel: { color: '#6e7891' } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eff2f6' } }, axisLabel: { color: '#6e7891', formatter: (v: number) => (v >= 1000 ? v / 1000 + 'k' : v) } },
+      xAxis: { type: 'category', data: s.map(p => p.label), boundaryGap: false, axisLine: { lineStyle: { color: '#E7DED2' } }, axisLabel: { color: '#6B5A4E' } },
+      yAxis: { type: 'value', splitLine: { lineStyle: { color: '#F3EEE7' } }, axisLabel: { color: '#6B5A4E', formatter: (v: number) => (v >= 1000 ? v / 1000 + 'k' : v) } },
       series: [
         { name: 'This period', type: 'line', smooth: true, showSymbol: false, lineStyle: { width: 3 }, areaStyle: { opacity: 0.08 }, data: s.map(p => p.value) },
         { name: 'Previous period', type: 'line', smooth: true, showSymbol: false, lineStyle: { type: 'dashed', width: 2 }, data: s.map(p => p.value2) }
@@ -40,8 +40,8 @@ export class DashboardPage {
       color: [CHART_COLORS[0]],
       tooltip: { trigger: 'axis', valueFormatter: (v: number) => '₹' + Number(v).toLocaleString('en-IN') },
       grid: { left: 8, right: 16, top: 8, bottom: 8, containLabel: true },
-      xAxis: { type: 'value', splitLine: { lineStyle: { color: '#eff2f6' } }, axisLabel: { color: '#6e7891' } },
-      yAxis: { type: 'category', data: c.map(x => x.name).reverse(), axisLabel: { color: '#6e7891' } },
+      xAxis: { type: 'value', splitLine: { lineStyle: { color: '#F3EEE7' } }, axisLabel: { color: '#6B5A4E' } },
+      yAxis: { type: 'category', data: c.map(x => x.name).reverse(), axisLabel: { color: '#6B5A4E' } },
       series: [{ type: 'bar', barWidth: 12, itemStyle: { borderRadius: [0, 4, 4, 0] }, data: c.map(x => x.value).reverse() }]
     };
   });
@@ -84,7 +84,7 @@ export class DashboardPage {
     return {
       color: CHART_COLORS,
       tooltip: { trigger: 'item' },
-      legend: { bottom: 0, icon: 'circle', itemWidth: 8, textStyle: { color: '#6e7891' } },
+      legend: { bottom: 0, icon: 'circle', itemWidth: 8, textStyle: { color: '#6B5A4E' } },
       series: [{
         type: 'pie', radius: ['55%', '78%'], center: ['50%', '42%'], avoidLabelOverlap: true, label: { show: false },
         data: items.map(i => ({ name: i.name.replace(/([a-z])([A-Z])/g, '$1 $2'), value: byCount ? i.count : i.value }))

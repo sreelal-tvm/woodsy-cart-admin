@@ -153,7 +153,7 @@ import { SHARED_PIPES } from '../../shared/pipes';
       </div>
     }
   `,
-  styles: [`.big-avatar { width: 5rem; height: 5rem; border-radius: 50%; background: var(--wc-soft-primary); color: #3874ff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; }`]
+  styles: [`.big-avatar { width: 5rem; height: 5rem; border-radius: 50%; background: var(--wc-soft-primary); color: #9A5226; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; }`]
 })
 export class CustomerDetailPage {
   private api = inject(ApiService);

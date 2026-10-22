@@ -2,27 +2,27 @@
 
 @import 'bootstrap/scss/functions';
 
-$primary: #3874ff;
-$secondary: #31374a;
+$primary: #9A5226;
+$secondary: #3D322B;
 $success: #25b003;
 $info: #0097eb;
 $warning: #e5780b;
 $danger: #ed2000;
-$light: #eff2f6;
-$dark: #141824;
+$light: #F3EEE7;
+$dark: #2A211C;
 
 $font-family-sans-serif: 'Nunito Sans', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 $font-size-base: 0.875rem;
-$body-color: #31374a;
-$body-bg: #f5f7fa;
-$border-color: #e3e6ed;
-$headings-color: #141824;
+$body-color: #3D322B;
+$body-bg: #FBF9F6;
+$border-color: #E7DED2;
+$headings-color: #2A211C;
 $headings-font-weight: 700;
 $border-radius: 0.375rem;
 $border-radius-lg: 0.5rem;
 $card-border-color: $border-color;
 $card-cap-bg: transparent;
-$input-border-color: #cbd0dd;
+$input-border-color: #E2D8CB;
 $input-btn-padding-y: 0.5rem;
 $input-btn-padding-x: 1rem;
 $table-cell-padding-y: 0.65rem;
@@ -38,28 +38,28 @@ $link-decoration: none;
   --wc-sidebar-width: 15.875rem;
   --wc-topbar-height: 4rem;
   --wc-surface: #ffffff;
-  --wc-muted: #6e7891;
-  --wc-quiet: #9fa6bc;
-  --wc-hover: #f5f7fa;
-  --wc-soft-primary: #e5edff;
+  --wc-muted: #6B5A4E;
+  --wc-quiet: #A39283;
+  --wc-hover: #F7F4EF;
+  --wc-soft-primary: #F5E6DA;
 }
 
 [data-bs-theme='dark'] {
-  --bs-body-bg: #0f111a;
-  --bs-body-color: #cbd0dd;
-  --bs-border-color: #31374a;
-  --bs-emphasis-color: #eff2f6;
-  --bs-heading-color: #eff2f6;
-  --bs-secondary-bg: #141824;
-  --bs-tertiary-bg: #1b1f2c;
-  --wc-surface: #141824;
-  --wc-muted: #8a94ad;
-  --wc-quiet: #6e7891;
-  --wc-hover: #1b1f2c;
-  --wc-soft-primary: #1b2a4e;
+  --bs-body-bg: #1C1613;
+  --bs-body-color: #E2D8CB;
+  --bs-border-color: #3D322B;
+  --bs-emphasis-color: #F3EEE7;
+  --bs-heading-color: #F3EEE7;
+  --bs-secondary-bg: #2A211C;
+  --bs-tertiary-bg: #352B25;
+  --wc-surface: #2A211C;
+  --wc-muted: #A8978A;
+  --wc-quiet: #6B5A4E;
+  --wc-hover: #352B25;
+  --wc-soft-primary: #4A2E1C;
   .card, .dropdown-menu, .modal-content, .wc-sidebar, .wc-topbar { background-color: var(--wc-surface); }
   .table { --bs-table-bg: transparent; }
-  .form-control, .form-select { background-color: #0f111a; border-color: #373e53; color: #eff2f6; }
+  .form-control, .form-select { background-color: #1C1613; border-color: #4A3E35; color: #F3EEE7; }
 }
 
 body { font-feature-settings: 'tnum'; -webkit-font-smoothing: antialiased; }
@@ -86,7 +86,7 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.01em; }
   font-weight: 800; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.02em;
   padding: 0.3em 0.6em; border-radius: 0.25rem; border: 1px solid transparent;
 }
-@each $name, $color in (primary: $primary, success: $success, info: $info, warning: $warning, danger: $danger, secondary: #6e7891) {
+@each $name, $color in (primary: $primary, success: $success, info: $info, warning: $warning, danger: $danger, secondary: #6B5A4E) {
   .badge-soft-#{$name} {
     color: shade-color($color, 15%);
     background-color: tint-color($color, 88%);
@@ -151,7 +151,7 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.01em; }
 .timeline li .dot { position: absolute; left: 0; top: 0.2rem; width: 0.95rem; height: 0.95rem; border-radius: 50%; background: var(--wc-surface); border: 3px solid $primary; }
 
 /* Modal (Angular-driven) */
-.wc-modal-backdrop { position: fixed; inset: 0; background: rgba(15, 17, 26, 0.45); z-index: 1050; display: flex; align-items: flex-start; justify-content: center; padding: 3rem 1rem; overflow-y: auto; }
+.wc-modal-backdrop { position: fixed; inset: 0; background: rgba(28, 22, 19, 0.45); z-index: 1050; display: flex; align-items: flex-start; justify-content: center; padding: 3rem 1rem; overflow-y: auto; }
 .wc-modal { background: var(--wc-surface); border-radius: 0.5rem; width: 100%; max-width: 640px; box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2); }
 .wc-modal.lg { max-width: 920px; }
 .wc-modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--bs-border-color); display: flex; justify-content: space-between; align-items: center; }

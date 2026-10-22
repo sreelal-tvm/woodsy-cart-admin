@@ -32,11 +32,11 @@ const MOBILE = /^([+]?91[ -]?)?0?[6-9][0-9]{4}[ -]?[0-9]{5}$/;
   imports: [FormsModule, RouterLink, ...SHARED_PIPES],
   styles: [`
     .channel { border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: .55rem .8rem; background: transparent; display: inline-flex; gap: .4rem; align-items: center; font-weight: 600; }
-    .channel.on { border-color: #3874ff; background: rgba(56,116,255,.08); color: #3874ff; }
+    .channel.on { border-color: #9A5226; background: rgba(154, 82, 38,.08); color: #9A5226; }
     .hits { position: absolute; z-index: 5; left: 0; right: 0; top: 100%; max-height: 300px; overflow: auto; }
     .line-img { width: 48px; height: 48px; object-fit: cover; border-radius: .375rem; }
     .pay { border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: .5rem .75rem; display: block; cursor: pointer; }
-    .pay.on { border-color: #3874ff; background: rgba(56,116,255,.06); }
+    .pay.on { border-color: #9A5226; background: rgba(154, 82, 38,.06); }
   `],
   template: `
     <nav class="fs-7 mb-2"><a routerLink="/orders">Orders</a> <i class="bi bi-chevron-right text-quiet mx-1"></i> <span class="text-muted">New order</span></nav>

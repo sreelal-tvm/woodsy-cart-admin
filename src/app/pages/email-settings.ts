@@ -39,8 +39,8 @@ const PRESETS: Preset[] = [
   imports: [FormsModule, DatePipe, RouterLink, PagerComponent, ...SHARED_PIPES],
   styles: [`
     .preset { border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: .45rem .7rem; background: transparent; font-weight: 600; font-size: .85rem; }
-    .preset.on { border-color: #3874ff; background: rgba(56,116,255,.08); color: #3874ff; }
-    .chip { display: inline-flex; align-items: center; gap: .3rem; background: var(--phoenix-gray-100, #eff2f6); border-radius: 2rem; padding: .2rem .4rem .2rem .7rem; font-size: .85rem; }
+    .preset.on { border-color: #9A5226; background: rgba(154, 82, 38,.08); color: #9A5226; }
+    .chip { display: inline-flex; align-items: center; gap: .3rem; background: var(--phoenix-gray-100, #F3EEE7); border-radius: 2rem; padding: .2rem .4rem .2rem .7rem; font-size: .85rem; }
     .ev { border-bottom: 1px solid var(--bs-border-color); padding: .6rem 0; }
     .ev:last-child { border-bottom: 0; }
   `],

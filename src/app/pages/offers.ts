@@ -46,9 +46,9 @@ function toLocalInput(iso: string): string {
   imports: [FormsModule, DatePipe, DecimalPipe, ModalComponent, ...SHARED_PIPES],
   styles: [`
     .offer-card { border-left: 4px solid var(--offer-color); }
-    .offer-banner { width: 120px; height: 64px; object-fit: cover; border-radius: .5rem; background: var(--phoenix-gray-100, #eff2f6); }
+    .offer-banner { width: 120px; height: 64px; object-fit: cover; border-radius: .5rem; background: var(--phoenix-gray-100, #F3EEE7); }
     .offer-swatch { width: 120px; height: 64px; border-radius: .5rem; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; text-align: center; font-size: .8rem; padding: .25rem; }
-    .stat .label { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--phoenix-gray-600, #6e7891); }
+    .stat .label { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--phoenix-gray-600, #6B5A4E); }
     .stat .value { font-weight: 700; }
     .pick-list { max-height: 220px; overflow: auto; }
     .pick-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: .375rem; }

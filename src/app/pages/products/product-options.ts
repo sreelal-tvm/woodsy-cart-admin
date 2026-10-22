@@ -25,7 +25,7 @@ const HEX = /^#[0-9a-f]{6}$/i;
     .swatch input[type=color] { position: absolute; inset: -8px; width: 3rem; height: 3rem; border: 0; padding: 0; cursor: pointer; opacity: 0; }
     .swatch.empty { background: repeating-linear-gradient(45deg, #eee, #eee 4px, #fff 4px, #fff 8px); }
     .hex { width: 6.5rem; font-family: var(--bs-font-monospace); }
-    .vendor-note { font-size: .75rem; color: var(--phoenix-gray-600, #6e7891); }
+    .vendor-note { font-size: .75rem; color: var(--phoenix-gray-600, #6B5A4E); }
     .vendor-dot { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); vertical-align: -1px; }
   `],
   template: `

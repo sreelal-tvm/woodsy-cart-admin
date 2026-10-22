@@ -53,7 +53,7 @@ import { PagerComponent } from '../../shared/ui';
     </div>
     <wc-pager [page]="page()" [pageSize]="25" [total]="rows().total" (pageChange)="page.set($event); load()" />
   `,
-  styles: [`.avatar-sm { width: 2rem; height: 2rem; border-radius: 50%; background: var(--wc-soft-primary); color: #3874ff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }`]
+  styles: [`.avatar-sm { width: 2rem; height: 2rem; border-radius: 50%; background: var(--wc-soft-primary); color: #9A5226; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }`]
 })
 export class CustomersPage {
   private api = inject(ApiService);

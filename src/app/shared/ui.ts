@@ -96,4 +96,4 @@ export class ModalComponent {
 }
 
 /** Phoenix-inspired default chart palette. */
-export const CHART_COLORS = ['#3874ff', '#25b003', '#e5780b', '#0097eb', '#ed2000', '#85a9ff', '#90d67f', '#f8b96e'];
+export const CHART_COLORS = ['#9A5226', '#25b003', '#e5780b', '#0097eb', '#ed2000', '#D88A55', '#90d67f', '#f8b96e'];
