@@ -97,7 +97,7 @@ export interface OrderDetail {
 
 export interface RefundRow {
   id: number; orderId?: number; orderNumber?: string; customer?: string; type: string; status: RefundStatus; amount: number; reason: string;
-  customerComment?: string; adminNotes?: string; reference?: string; createdAt: string; processedAt?: string; paymentMethod?: PaymentMethod;
+  customerComment?: string; adminNotes?: string; reference?: string; createdAt: string; processedAt?: string; paymentMethod?: PaymentMethod; paymentProvider?: string;
 }
 
 export interface CustomerRow { id: number; fullName: string; email: string; phone?: string; isActive: boolean; isGuest: boolean; orders: number; totalSpent: number; lastOrderAt?: string; createdAt: string; city?: string; }

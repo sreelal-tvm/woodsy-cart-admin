@@ -48,7 +48,7 @@ import { ModalComponent } from '../shared/ui';
           <div class="col-12"><label class="form-label">Refund reference / UTR</label><input class="form-control" [(ngModel)]="form.reference" /></div>
           <div class="col-12"><label class="form-label">Notes</label><textarea class="form-control" rows="2" [(ngModel)]="form.adminNotes"></textarea></div>
         </div>
-        @if (r.paymentMethod === 'Razorpay') { <div class="alert alert-info py-2 fs-7 mt-3 mb-0">Online payments: issue the refund from your Razorpay dashboard, then paste the refund id here.</div> }
+        @if (gatewayName(r); as gw) { <div class="alert alert-info py-2 fs-7 mt-3 mb-0">Paid online through {{ gw }}: issue the refund from your {{ gw }} dashboard, then paste the refund id here.</div> }
         <ng-container footer><button class="btn btn-phoenix-secondary" (click)="editing.set(null)">Close</button><button class="btn btn-primary" (click)="save()">Save</button></ng-container>
       </wc-modal>
     }
@@ -58,6 +58,12 @@ export class RefundsPage {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   protected rows = signal<RefundRow[]>([]);
+
+  /** Gateway the order was paid through (refunds are issued from its dashboard), or null for UPI / bank / cash. */
+  protected gatewayName(r: RefundRow): string | null {
+    const names: Record<string, string> = { Razorpay: 'Razorpay', PhonePe: 'PhonePe', Cashfree: 'Cashfree', PayU: 'PayU', PaytmPg: 'Paytm' };
+    return names[r.paymentProvider ?? ''] ?? (r.paymentMethod === 'Razorpay' ? 'Razorpay' : null);
+  }
   protected editing = signal<RefundRow | null>(null);
   protected statuses: RefundStatus[] = ['Requested', 'Approved', 'Rejected', 'Processed'];
   status = '';
