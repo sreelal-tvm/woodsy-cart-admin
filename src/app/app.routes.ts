@@ -4,6 +4,8 @@ import { ShellComponent } from './layout/shell';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login').then(m => m.LoginPage), title: 'Sign in · WoodsyCart Admin' },
+  { path: 'forgot-password', loadComponent: () => import('./pages/password').then(m => m.ForgotPasswordPage), title: 'Forgot password · WoodsyCart Admin' },
+  { path: 'reset-password', loadComponent: () => import('./pages/password').then(m => m.ResetPasswordPage), title: 'Choose a new password · WoodsyCart Admin' },
   {
     path: '',
     component: ShellComponent,

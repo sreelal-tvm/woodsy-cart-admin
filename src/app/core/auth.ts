@@ -39,6 +39,20 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string) {
+    return this.api.post<{ message: string }>('auth/admin/forgot-password', { email });
+  }
+
+  /** Sets the new password from the emailed link, then signs the staff member in. */
+  resetPassword(email: string, token: string, newPassword: string) {
+    return this.api.post<AuthResponse>('auth/admin/reset-password', { email, token, newPassword }).pipe(
+      tap(res => {
+        this.state.set(res);
+        localStorage.setItem(KEY, JSON.stringify(res));
+      })
+    );
+  }
+
   logout(redirect = true) {
     this.state.set(null);
     localStorage.removeItem(KEY);
