@@ -7,6 +7,7 @@ import { Lookups, Paged, ProductRow } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { ModalComponent, PagerComponent } from '../../shared/ui';
+import { SocialQueueResult, SocialStatus, socialStatusLabel } from '../social/social-models';
 
 @Component({
   selector: 'wc-products',
@@ -37,6 +38,10 @@ import { ModalComponent, PagerComponent } from '../../shared/ui';
         <option value="newest">Newest</option><option value="name">Name</option><option value="price">Price ↑</option>
         <option value="price_desc">Price ↓</option><option value="margin">Lowest margin</option><option value="sold">Best selling</option>
       </select>
+      <select class="form-select form-select-sm w-auto" [(ngModel)]="social" (change)="page.set(1); load()" title="Instagram / Facebook">
+        <option [ngValue]="null">Social: all</option><option value="not-posted">Not posted</option><option value="posted">Posted</option>
+        <option value="out-of-date">Out of date</option><option value="queued">In queue</option><option value="failed">Failed</option>
+      </select>
       @if (selected().size) {
         <div class="ms-auto d-flex flex-wrap gap-2 align-items-center">
           <span class="fs-7 text-muted">{{ selected().size }} selected</span>
@@ -46,6 +51,7 @@ import { ModalComponent, PagerComponent } from '../../shared/ui';
           <button class="btn btn-sm btn-phoenix-secondary" (click)="bulk('ack-price')">Accept price change</button>
           <button class="btn btn-sm btn-phoenix-secondary" (click)="commissionModal.set(true)">Set commission</button>
           <button class="btn btn-sm btn-phoenix-secondary" (click)="gstModal.set(true)">Set GST %</button>
+          <button class="btn btn-sm btn-phoenix-primary" (click)="socialModal.set(true)"><i class="bi bi-instagram me-1"></i>Post to social media</button>
           <button class="btn btn-sm btn-outline-danger" (click)="bulk('delete')">Delete</button>
         </div>
       }
@@ -84,6 +90,9 @@ import { ModalComponent, PagerComponent } from '../../shared/ui';
                   <span [class]="p.isActive ? 'badge-soft badge-soft-success' : 'badge-soft badge-soft-secondary'">{{ p.isActive ? 'Published' : 'Draft' }}</span>
                   @if (!p.isAvailable) { <span class="badge-soft badge-soft-danger ms-1">Out of stock</span> }
                   @if (p.isFeatured) { <i class="bi bi-star-fill text-warning ms-1" title="Featured"></i> }
+                  @for (s of socialBadges(p.social); track s.platform) {
+                    <i class="bi ms-1" [class]="s.icon + ' ' + s.cls" [title]="s.platform + ': ' + s.label"></i>
+                  }
                 </td>
                 <td class="text-end">{{ p.soldCount }}</td>
                 <td class="text-muted fs-8 text-nowrap">{{ p.lastSyncedAt ? (p.lastSyncedAt | date: 'dd MMM, h:mm a') : '—' }}</td>
@@ -97,6 +106,18 @@ import { ModalComponent, PagerComponent } from '../../shared/ui';
     </div>
     <wc-pager [page]="page()" [pageSize]="pageSize" [total]="rows().total" (pageChange)="page.set($event); load()" />
 
+    @if (socialModal()) {
+      <wc-modal title="Post to Instagram and Facebook" (closed)="socialModal.set(false)">
+        <p class="fs-7">{{ selected().size }} products selected. Products already posted or queued are skipped, so each product has one post per platform.</p>
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary" (click)="postSocial(false)"><i class="bi bi-calendar-check me-1"></i>Add to the queue</button>
+          <div class="form-text mt-0 mb-2">Posted one at a time at your posting times (Social media → Settings). Best for reach.</div>
+          <button class="btn btn-phoenix-secondary" (click)="postSocial(true)"><i class="bi bi-send me-1"></i>Post now, up to today's limit</button>
+          <div class="form-text mt-0">Posts straight away, as many as Instagram's 24-hour limit allows; the rest go into the queue.</div>
+        </div>
+        <ng-container footer><button class="btn btn-phoenix-secondary" (click)="socialModal.set(false)">Close</button></ng-container>
+      </wc-modal>
+    }
     @if (gstModal()) {
       <wc-modal title="Set GST % for selected products" (closed)="gstModal.set(false)">
         <label class="form-label">GST rate</label>
@@ -126,6 +147,7 @@ export class ProductsPage {
   private toast = inject(ToastService);
   readonly search = input<string>();
   readonly status = input<string>();
+  readonly socialFilter = input<string>(undefined, { alias: 'social' });
 
   protected tabs = [
     { key: 'all', label: 'All' }, { key: 'published', label: 'Published' }, { key: 'draft', label: 'Drafts' },
@@ -139,6 +161,8 @@ export class ProductsPage {
   protected page = signal(1);
   protected commissionModal = signal(false);
   protected gstModal = signal(false);
+  protected socialModal = signal(false);
+  social: string | null = null;
   gstRate = 18;
   pageSize = 25;
   q = '';
@@ -150,9 +174,10 @@ export class ProductsPage {
     this.api.get<Lookups>('admin/products/lookups').subscribe(l => this.lookups.set(l));
     // Re-run only when the URL's search/status change — not when a tab is clicked (load() reads the tab and page).
     effect(() => {
-      const search = this.search(), status = this.status();
+      const search = this.search(), status = this.status(), social = this.socialFilter();
       untracked(() => {
         this.q = search ?? '';
+        this.social = social ?? null;
         this.tab.set(status ?? 'all');
         this.load();
       });
@@ -164,7 +189,7 @@ export class ProductsPage {
   load() {
     this.selected.set(new Set());
     this.api.get<Paged<ProductRow>>('admin/products', {
-      search: this.q, categoryId: this.categoryId, status: this.tab() === 'all' ? null : this.tab(), sort: this.sort, page: this.page(), pageSize: this.pageSize
+      search: this.q, categoryId: this.categoryId, status: this.tab() === 'all' ? null : this.tab(), social: this.social, sort: this.sort, page: this.page(), pageSize: this.pageSize
     }).subscribe(r => this.rows.set(r));
   }
 
@@ -175,6 +200,27 @@ export class ProductsPage {
   }
   allSelected() { return this.rows().items.length > 0 && this.rows().items.every(p => this.selected().has(p.id)); }
   toggleAll() { this.selected.set(this.allSelected() ? new Set() : new Set(this.rows().items.map(p => p.id))); }
+
+  postSocial(now: boolean) {
+    this.api.post<SocialQueueResult>('admin/social/queue', { productIds: [...this.selected()], now }).subscribe(r => {
+      this.socialModal.set(false);
+      const parts = [];
+      if (r.postingNow) parts.push(`${r.postingNow} posting now`);
+      if (r.scheduled) parts.push(`${r.scheduled} queued`);
+      if (r.skipped) parts.push(`${r.skipped} skipped (already posted, unpublished or no photos)`);
+      this.toast.success(parts.join(' · ') || 'Nothing to post');
+      if (r.note) this.toast.info(r.note);
+      this.load();
+    });
+  }
+
+  socialBadges(s?: Partial<Record<'Instagram' | 'Facebook', string>>) {
+    if (!s) return [];
+    const cls: Record<string, string> = { Published: 'text-success', OutOfDate: 'text-warning', Failed: 'text-danger', Queued: 'text-info', Publishing: 'text-info' };
+    return (['Instagram', 'Facebook'] as const).filter(p => s[p] && s[p] !== 'Removed').map(p => ({
+      platform: p, icon: p === 'Instagram' ? 'bi-instagram' : 'bi-facebook', cls: cls[s[p]!] ?? 'text-muted', label: socialStatusLabel(s[p] as SocialStatus)
+    }));
+  }
 
   bulk(action: string, value: number | null = null) {
     if (action === 'delete' && !confirm(`Delete ${this.selected().size} products? They stay in past orders.`)) return;

@@ -1,0 +1,30 @@
+export type SocialPlatform = 'Instagram' | 'Facebook';
+export type SocialStatus = 'Queued' | 'Publishing' | 'Published' | 'OutOfDate' | 'Failed' | 'Removed';
+
+export interface SocialState {
+  platform: SocialPlatform; enabled: boolean; postId?: number; status?: SocialStatus; scheduledAt?: string; publishedAt?: string;
+  permalink?: string; lastError?: string; changes: string[]; postedCaption?: string; customCaption: boolean;
+}
+export interface SocialProduct { productId: number; caption: string; code: string; photos: string[]; connected: boolean; publishable: boolean; platforms: SocialState[]; }
+export interface SocialQueueResult { products: number; postingNow: number; scheduled: number; skipped: number; firstSlot?: string; note?: string; }
+export interface SocialPostRow {
+  id: number; productId: number; productName: string; image?: string; platform: SocialPlatform; status: SocialStatus;
+  scheduledAt?: string; publishedAt?: string; permalink?: string; lastError?: string; changes: string[]; customCaption: boolean;
+}
+export interface SocialQuota { platform: SocialPlatform; used: number; limit: number; fromMeta: boolean; }
+export interface SocialSummary {
+  connected: boolean; instagram?: string; page?: string; enabled: SocialPlatform[]; quota: SocialQuota; facebookLast24h: number;
+  nextPostAt?: string; postedProducts: number; notPosted: number; counts: Partial<Record<SocialPlatform, Partial<Record<SocialStatus, number>>>>;
+}
+export interface SocialSettings {
+  connected: boolean; metaAppId?: string; pageId?: string; pageName?: string; instagramUserId?: string; instagramUsername?: string; connectedAt?: string;
+  instagramEnabled: boolean; facebookEnabled: boolean; template: string; customTemplate: boolean; defaultTemplate: string; tokens: string[];
+  includePrice: boolean; showMrp: boolean; whatsApp?: string; city?: string; hashtags?: string; maxHashtags: number; postTimes: string;
+  autoQueueNewProducts: boolean; publicPhotos: boolean;
+}
+
+export const socialStatusLabel = (s: SocialStatus) =>
+  ({ Queued: 'In queue', Publishing: 'Posting', Published: 'Posted', OutOfDate: 'Out of date', Failed: 'Failed', Removed: 'Removed' })[s];
+
+export const socialStatusCls = (s: SocialStatus) =>
+  'badge-soft badge-soft-' + ({ Queued: 'info', Publishing: 'info', Published: 'success', OutOfDate: 'warning', Failed: 'danger', Removed: 'secondary' })[s];

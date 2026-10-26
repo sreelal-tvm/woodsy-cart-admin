@@ -8,6 +8,7 @@ import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { environment } from '../../../environments/environment';
 import { ProductOptionsComponent } from './product-options';
+import { SocialCardComponent } from '../social/social-card';
 
 const blank = (): ProductDetail => ({
   vendorCost: 0, vendorPricesIncludeGst: false,
@@ -19,7 +20,7 @@ const blank = (): ProductDetail => ({
 
 @Component({
   selector: 'wc-product-edit',
-  imports: [FormsModule, RouterLink, DatePipe, ProductOptionsComponent, ...SHARED_PIPES],
+  imports: [FormsModule, RouterLink, DatePipe, ProductOptionsComponent, SocialCardComponent, ...SHARED_PIPES],
   templateUrl: './product-edit.html'
 })
 export class ProductEditPage {

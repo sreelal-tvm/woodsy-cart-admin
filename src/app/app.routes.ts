@@ -27,6 +27,7 @@ export const routes: Routes = [
       { path: 'image-cleaning', loadComponent: () => import('./pages/image-cleaning').then(m => m.ImageCleaningPage), title: 'Image clean-up · WoodsyCart' },
       { path: 'reviews', loadComponent: () => import('./pages/reviews').then(m => m.ReviewsPage), title: 'Reviews · WoodsyCart' },
       { path: 'offers', loadComponent: () => import('./pages/offers').then(m => m.OffersPage), title: 'Festival offers · WoodsyCart' },
+      { path: 'social', loadComponent: () => import('./pages/social/social').then(m => m.SocialPage), title: 'Social media · WoodsyCart' },
       { path: 'coupons', loadComponent: () => import('./pages/coupons').then(m => m.CouponsPage), title: 'Coupons · WoodsyCart' },
       { path: 'banners', loadComponent: () => import('./pages/banners').then(m => m.BannersPage), title: 'Home banners · WoodsyCart' },
       { path: 'vendors', loadComponent: () => import('./pages/vendors/vendors').then(m => m.VendorsPage), title: 'Vendor & sync · WoodsyCart' },
