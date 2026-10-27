@@ -32,7 +32,7 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
                   @else if (pl.status === 'Queued') { <div class="fs-8 text-muted">Posts {{ pl.scheduledAt | date: 'EEE d MMM, h:mm a' }}</div> }
                   @else if (pl.publishedAt) { <div class="fs-8 text-muted">Posted {{ pl.publishedAt | date: 'd MMM y' }}@if (pl.permalink) { · <a [href]="pl.permalink" target="_blank" rel="noopener">View</a> }</div> }
                   @if (pl.status === 'OutOfDate' && pl.changes.length) { <div class="fs-8 text-warning">Changed: {{ pl.changes.join(', ') }}</div> }
-                  @if (pl.status === 'OutOfDate' && pl.platform === 'Threads') { <div class="fs-8 text-muted">Threads posts can't be edited after 15 minutes. Keep it as it is, or replace it when the price changed.</div> }
+                  @if (pl.status === 'OutOfDate' && (pl.platform === 'Threads' || pl.platform === 'ThreadsVideo')) { <div class="fs-8 text-muted">Threads posts can't be edited after 15 minutes. Keep it as it is, or replace it when the price changed.</div> }
                   @if (pl.status === 'OutOfDate' && (pl.platform === 'Instagram' || pl.platform === 'InstagramReel')) { <div class="fs-8 text-muted">Instagram doesn't let apps edit a caption. Copy the new one, paste it in the Instagram app (post → ⋯ → Edit), then click "Mark as updated".</div> }
                   @if (pl.lastError && pl.status !== 'Published') { <div class="fs-8 text-danger">{{ pl.lastError }}</div> }
                 </div>
@@ -54,7 +54,7 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
                         <button class="btn btn-sm btn-primary" (click)="copyCaption(pl)"><i class="bi bi-clipboard me-1"></i>Copy updated caption</button>
                         <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'mark-updated')" title="After pasting the caption into the Instagram app">Mark as updated</button>
                       }
-                      @if (pl.platform === 'Threads') {
+                      @if (pl.platform === 'Threads' || pl.platform === 'ThreadsVideo') {
                         <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'mark-updated')" title="Leave the Threads post as it is">Keep as is</button>
                       }
                       <button class="btn btn-sm btn-phoenix-secondary" (click)="replace(pl)">Replace post</button>

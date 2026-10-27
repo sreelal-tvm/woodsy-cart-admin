@@ -92,7 +92,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                         <button class="btn btn-sm btn-primary ms-1" (click)="copy(r)"><i class="bi bi-clipboard me-1"></i>Copy caption</button>
                         <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')">Mark as updated</button>
                       }
-                      @if (r.platform === 'Threads') {
+                      @if (r.platform === 'Threads' || r.platform === 'ThreadsVideo') {
                         <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')" title="Leave the Threads post as it is">Keep as is</button>
                       }
                       <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="replace(r)">Replace post</button>
@@ -201,7 +201,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
             <h5><i class="bi bi-camera-reels me-1"></i>Reels</h5>
             @if (!c.reelsAvailable) { <div class="alert alert-warning fs-8">Reels need FFmpeg on the server (C:\\WoodsyCart\\tools\\ffmpeg). See the handbook, section 15.</div> }
             <p class="fs-8 text-muted">A 10–15 second video made from the product's photos, with the name, price and details on screen. Reels reach far more people who don't follow you yet.</p>
-            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="reels" [(ngModel)]="c.reelsEnabled" /><label class="form-check-label" for="reels">Also post a Reel to Instagram and Facebook for each product</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="reels" [(ngModel)]="c.reelsEnabled" /><label class="form-check-label" for="reels">Add the reel to bulk and automatic posting (Instagram Reel, Facebook Reel, Threads video)</label></div>
             <label class="form-label">Reel times (India time, one reel each)</label>
             <input class="form-control" [(ngModel)]="c.reelTimes" placeholder="18:00" [disabled]="!c.reelsEnabled" />
             <div class="form-text mb-3">Separate from photo posts. One reel a day (evening) is a good pace; Facebook allows 30 reels a day.</div>
