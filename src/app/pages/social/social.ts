@@ -7,25 +7,26 @@ import { Paged } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { PagerComponent } from '../../shared/ui';
-import { SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialStatusCls, socialStatusLabel } from './social-models';
+import { SocialGuideComponent } from './social-guide';
+import { SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialStatusCls, socialStatusLabel } from './social-models';
 
 type Tab = 'queue' | 'posted' | 'outdated' | 'failed' | 'settings';
 interface PageChoice { id: string; name: string; instagram?: string; }
 
-/** Admin → Marketing → Social media: Instagram and Facebook posting of products. */
+/** Admin → Marketing → Social media: Instagram, Facebook and Threads posting of products. */
 @Component({
   selector: 'wc-social',
-  imports: [FormsModule, RouterLink, DatePipe, PagerComponent, ...SHARED_PIPES],
+  imports: [FormsModule, RouterLink, DatePipe, PagerComponent, SocialGuideComponent, ...SHARED_PIPES],
   template: `
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
       <h2 class="page-title mb-0">Social media</h2>
       @if (sum(); as s) {
         <span [class]="s.connected ? 'badge-soft badge-soft-success' : 'badge-soft badge-soft-secondary'">
-          {{ s.connected ? 'Connected' + (s.instagram ? ' · @' + s.instagram : '') + (s.page ? ' · ' + s.page : '') : 'Not connected' }}
+          {{ s.connected ? 'Connected' + (s.instagram ? ' · @' + s.instagram : '') + (s.page ? ' · ' + s.page : '') + (s.threads ? ' · Threads @' + s.threads : '') : 'Not connected' }}
         </span>
       }
     </div>
-    <p class="page-subtitle">Posts your products to Instagram and your Facebook Page — one post per product, at a steady pace. Choose products on the <a routerLink="/products">Products</a> page (tick them, then <b>Post to social media</b>) or on each product's page.</p>
+    <p class="page-subtitle">Posts your products to Instagram, your Facebook Page and Threads — one post per product, at a steady pace. Choose products on the <a routerLink="/products">Products</a> page (tick them, then <b>Post to social media</b>) or on each product's page.</p>
 
     @if (sum(); as s) {
       <div class="row g-3 mb-3">
@@ -75,7 +76,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                       </div>
                     </div>
                   </td>
-                  <td><i class="bi me-1" [class.bi-instagram]="r.platform === 'Instagram'" [class.bi-facebook]="r.platform === 'Facebook'"></i>{{ r.platform }}</td>
+                  <td><i class="bi me-1" [class]="'bi me-1 ' + icon(r.platform)"></i>{{ r.platform }}</td>
                   <td><span [class]="cls(r.status)">{{ label(r.status) }}</span></td>
                   <td class="fs-7 text-nowrap">{{ (current() === 'queue' ? r.scheduledAt : r.publishedAt) | date: 'EEE d MMM, h:mm a' }}</td>
                   <td class="text-end text-nowrap">
@@ -90,6 +91,9 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                         <button class="btn btn-sm btn-primary ms-1" (click)="copy(r)"><i class="bi bi-clipboard me-1"></i>Copy caption</button>
                         <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')">Mark as updated</button>
                       }
+                      @if (r.platform === 'Threads') {
+                        <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')" title="Leave the Threads post as it is">Keep as is</button>
+                      }
                       <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="replace(r)">Replace post</button>
                     }
                   </td>
@@ -103,9 +107,14 @@ interface PageChoice { id: string; name: string; instagram?: string; }
       </div>
       <wc-pager [page]="page()" [pageSize]="25" [total]="rows().total" (pageChange)="page.set($event); load()" />
       @if (current() === 'outdated') {
-        <div class="fs-8 text-muted mt-2">Instagram doesn't let apps change a caption after posting. <b>Copy caption</b>, then in the Instagram app open the post → ⋯ → <b>Edit</b>, paste and save, and click <b>Mark as updated</b> here. Likes and comments stay. Facebook posts are updated automatically.</div>
+        <div class="fs-8 text-muted mt-2">Instagram doesn't let apps change a caption after posting. <b>Copy caption</b>, then in the Instagram app open the post → ⋯ → <b>Edit</b>, paste and save, and click <b>Mark as updated</b> here. Likes and comments stay. Facebook posts are updated automatically. Threads posts can't be edited after 15 minutes: <b>Keep as is</b>, or <b>Replace post</b> when the price changed.</div>
       }
     } @else if (cfg(); as c) {
+      <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 fs-7">
+        <span><i class="bi bi-info-circle me-1"></i>Setting up for the first time, or a connection stopped working? The guide walks you through every click.</span>
+        <button class="btn btn-sm btn-primary" (click)="guide.set(true)"><i class="bi bi-book me-1"></i>Setup guide</button>
+      </div>
+      @if (guide()) { <wc-social-guide [s]="c" (closed)="guide.set(false)" /> }
       <div class="row g-3">
         <div class="col-xl-6">
           <div class="card mb-3"><div class="card-body">
@@ -146,9 +155,39 @@ interface PageChoice { id: string; name: string; instagram?: string; }
           </div></div>
 
           <div class="card mb-3"><div class="card-body">
+            <h5><i class="bi bi-threads me-1"></i>Threads</h5>
+            @if (c.threadsConnected) {
+              <div class="fs-7 mb-2">
+                <div>Threads: <b>@{{ c.threadsUsername }}</b></div>
+                <div class="text-muted fs-8">Connected {{ c.threadsConnectedAt | date: 'd MMM y, h:mm a' }} · access renews itself weekly (valid until {{ c.threadsTokenExpiresAt | date: 'd MMM y' }})</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-phoenix-secondary" (click)="showThreads.set(!showThreads())">Connect again</button>
+                <button class="btn btn-sm btn-outline-danger" (click)="disconnectThreads()">Disconnect</button>
+              </div>
+            } @else {
+              <p class="fs-7 text-muted mb-2">Threads has its own login, through the same Meta app.</p>
+            }
+            @if (!c.threadsConnected || showThreads()) {
+              <ol class="fs-8 text-muted ps-3 mt-2">
+                <li>Meta app → <b>Use cases → Access the Threads API → Customize</b>: permissions <code>threads_basic</code>, <code>threads_content_publish</code>, <code>threads_delete</code>; under <b>Settings</b> add this redirect callback URL:
+                  <code class="d-block my-1 user-select-all">{{ c.threadsCallbackUrl ?? 'needs Smtp:ApiUrl (https)' }}</code></li>
+                <li><b>App roles → Roles → Add People → Threads Tester</b>: your Threads profile; accept it in Threads → Settings → Account → Website permissions → Invites.</li>
+                <li><b>App settings → Basic</b>: copy the <b>Threads app ID</b> and <b>Threads app secret</b> below, then log in to Threads and allow access.</li>
+              </ol>
+              <div class="row g-2">
+                <div class="col-md-6"><label class="form-label">Threads app ID</label><input class="form-control" [(ngModel)]="threadsConn.appId" autocomplete="off" /></div>
+                <div class="col-md-6"><label class="form-label">Threads app secret</label><input type="password" class="form-control" [(ngModel)]="threadsConn.appSecret" autocomplete="new-password" /></div>
+                <div class="col-12"><button class="btn btn-primary btn-sm" (click)="connectThreads()" [disabled]="!c.threadsCallbackUrl"><i class="bi bi-threads me-1"></i>Log in to Threads</button></div>
+              </div>
+            }
+          </div></div>
+
+          <div class="card mb-3"><div class="card-body">
             <h5>Posting</h5>
             <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="ig" [(ngModel)]="c.instagramEnabled" /><label class="form-check-label" for="ig">Post to Instagram</label></div>
-            <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" id="fb" [(ngModel)]="c.facebookEnabled" /><label class="form-check-label" for="fb">Post to the Facebook Page</label></div>
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="fb" [(ngModel)]="c.facebookEnabled" /><label class="form-check-label" for="fb">Post to the Facebook Page</label></div>
+            <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" id="th" [(ngModel)]="c.threadsEnabled" /><label class="form-check-label" for="th">Post to Threads</label></div>
             <label class="form-label">Posting times (India time, one product each)</label>
             <input class="form-control" [(ngModel)]="c.postTimes" placeholder="11:00, 15:00, 20:30" />
             <div class="form-text mb-3">2–3 posts a day spread out reach more people than many at once. <b>Post now</b> still posts immediately, up to Instagram's daily limit.</div>
@@ -172,6 +211,16 @@ interface PageChoice { id: string; name: string; instagram?: string; }
             <textarea class="form-control fs-8" rows="18" [(ngModel)]="c.template" style="font-family: var(--bs-font-monospace)"></textarea>
             <div class="form-text">Fields: @for (t of c.tokens; track t) { <code class="me-1">{{ '{' + t + '}' }}</code> } — a line whose field is empty is left out.</div>
           </div></div>
+          <div class="card mb-3"><div class="card-body">
+            <h5>Threads text</h5>
+            <div class="row g-2 mb-2">
+              <div class="col-md-6"><label class="form-label">Topic tag</label><input class="form-control" [(ngModel)]="c.threadsTopic" placeholder="Furniture" maxlength="50" /></div>
+            </div>
+            <div class="form-text mb-2">Threads shows one topic per post (instead of hashtags); a broad one like Furniture or Home Decor reaches people browsing that topic. Leave empty for none.</div>
+            <label class="form-label d-flex justify-content-between"><span>Template</span><a class="fs-8" href="javascript:void(0)" (click)="c.threadsTemplate = c.threadsDefaultTemplate">Reset to default</a></label>
+            <textarea class="form-control fs-8" rows="10" [(ngModel)]="c.threadsTemplate" style="font-family: var(--bs-font-monospace)"></textarea>
+            <div class="form-text">Threads allows 500 characters (an emoji or ₹ counts as 3–4); longer text drops lines from the bottom, keeping the product link. <code>{{ '{url}' }}</code> is the product's page: links work on Threads.</div>
+          </div></div>
           <div class="text-end"><button class="btn btn-primary" (click)="save()">Save settings</button></div>
         </div>
       </div>
@@ -182,6 +231,8 @@ export class SocialPage {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   readonly tab = input<string>();
+  readonly threads = input<string>();
+  readonly reason = input<string>();
 
   protected tabs: { key: Tab; label: string }[] = [
     { key: 'queue', label: 'Queue' }, { key: 'posted', label: 'Posted' }, { key: 'outdated', label: 'Out of date' },
@@ -196,6 +247,10 @@ export class SocialPage {
   protected connecting = signal(false);
   protected pages = signal<PageChoice[]>([]);
   protected conn: { appId: string; appSecret: string; userToken: string; pageId: string | null } = { appId: '', appSecret: '', userToken: '', pageId: null };
+  protected showThreads = signal(false);
+  protected guide = signal(false);
+  protected threadsConn = { appId: '', appSecret: '' };
+  protected icon = socialIcon;
   protected label = socialStatusLabel;
   protected cls = socialStatusCls;
 
@@ -203,6 +258,16 @@ export class SocialPage {
     effect(() => {
       const t = this.tab() as Tab | undefined;
       untracked(() => this.setTab(t && this.tabs.some(x => x.key === t) ? t : 'queue'));
+    });
+    // Back from the Threads login
+    effect(() => {
+      const r = this.threads(), why = this.reason();
+      untracked(() => {
+        if (r === 'connected') this.toast.success('Threads connected');
+        else if (r === 'failed') this.toast.error('Threads refused the connection' + (why ? ': ' + why : '.'));
+        else if (r === 'expired') this.toast.error('The Threads login took too long or was opened twice. Try again.');
+        else if (r === 'cancelled') this.toast.info('Threads login cancelled');
+      });
     });
     this.loadSummary();
   }
@@ -216,7 +281,10 @@ export class SocialPage {
   loadSummary() { this.api.get<SocialSummary>('admin/social/summary').subscribe(s => this.sum.set(s)); }
 
   loadSettings() {
-    this.api.get<SocialSettings>('admin/social/settings').subscribe(c => { this.cfg.set(c); this.conn.appId = c.metaAppId ?? ''; });
+    this.api.get<SocialSettings>('admin/social/settings').subscribe(c => {
+      this.cfg.set(c); this.conn.appId = c.metaAppId ?? ''; this.threadsConn.appId = c.threadsAppId ?? '';
+      if (!c.connected && !c.threadsConnected && !c.metaAppId) this.guide.set(true);
+    });
   }
 
   load() {
@@ -225,7 +293,7 @@ export class SocialPage {
       .subscribe(r => this.rows.set(r));
   }
 
-  count(s: SocialSummary, st: SocialStatus) { return (s.counts.Instagram?.[st] ?? 0) + (s.counts.Facebook?.[st] ?? 0); }
+  count(s: SocialSummary, st: SocialStatus) { return (s.counts.Instagram?.[st] ?? 0) + (s.counts.Facebook?.[st] ?? 0) + (s.counts.Threads?.[st] ?? 0); }
   queued(s: SocialSummary) { return this.count(s, 'Queued'); }
 
   emptyText() {
@@ -266,6 +334,15 @@ export class SocialPage {
   disconnect() {
     if (!confirm('Disconnect Instagram and Facebook? Queued posts wait until you connect again.')) return;
     this.api.post('admin/social/disconnect').subscribe(() => { this.toast.success('Disconnected'); this.loadSettings(); this.loadSummary(); });
+  }
+
+  connectThreads() {
+    this.api.post<{ url: string }>('admin/social/threads/connect', this.threadsConn).subscribe(r => window.location.href = r.url);
+  }
+
+  disconnectThreads() {
+    if (!confirm('Disconnect Threads? Queued Threads posts wait until you connect again.')) return;
+    this.api.post('admin/social/threads/disconnect').subscribe(() => { this.toast.success('Threads disconnected'); this.loadSettings(); this.loadSummary(); });
   }
 
   save() {

@@ -7,7 +7,7 @@ import { Lookups, Paged, ProductRow } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { ModalComponent, PagerComponent } from '../../shared/ui';
-import { SocialQueueResult, SocialStatus, socialStatusLabel } from '../social/social-models';
+import { SocialPlatform, SocialQueueResult, SocialStatus, socialIcon, socialStatusLabel } from '../social/social-models';
 
 @Component({
   selector: 'wc-products',
@@ -38,9 +38,9 @@ import { SocialQueueResult, SocialStatus, socialStatusLabel } from '../social/so
         <option value="newest">Newest</option><option value="name">Name</option><option value="price">Price ↑</option>
         <option value="price_desc">Price ↓</option><option value="margin">Lowest margin</option><option value="sold">Best selling</option>
       </select>
-      <select class="form-select form-select-sm w-auto" [(ngModel)]="social" (change)="page.set(1); load()" title="Instagram / Facebook">
+      <select class="form-select form-select-sm w-auto" [(ngModel)]="social" (change)="page.set(1); load()" title="Instagram / Facebook / Threads">
         <option [ngValue]="null">Social: all</option><option value="not-posted">Not posted</option><option value="posted">Posted</option>
-        <option value="out-of-date">Out of date</option><option value="queued">In queue</option><option value="failed">Failed</option>
+        <option value="not-on-threads">Not on Threads</option><option value="out-of-date">Out of date</option><option value="queued">In queue</option><option value="failed">Failed</option>
       </select>
       @if (selected().size) {
         <div class="ms-auto d-flex flex-wrap gap-2 align-items-center">
@@ -107,7 +107,7 @@ import { SocialQueueResult, SocialStatus, socialStatusLabel } from '../social/so
     <wc-pager [page]="page()" [pageSize]="pageSize" [total]="rows().total" (pageChange)="page.set($event); load()" />
 
     @if (socialModal()) {
-      <wc-modal title="Post to Instagram and Facebook" (closed)="socialModal.set(false)">
+      <wc-modal title="Post to social media" (closed)="socialModal.set(false)">
         <p class="fs-7">{{ selected().size }} products selected. Products already posted or queued are skipped, so each product has one post per platform.</p>
         <div class="d-grid gap-2">
           <button class="btn btn-primary" (click)="postSocial(false)"><i class="bi bi-calendar-check me-1"></i>Add to the queue</button>
@@ -214,11 +214,11 @@ export class ProductsPage {
     });
   }
 
-  socialBadges(s?: Partial<Record<'Instagram' | 'Facebook', string>>) {
+  socialBadges(s?: Partial<Record<SocialPlatform, string>>) {
     if (!s) return [];
     const cls: Record<string, string> = { Published: 'text-success', OutOfDate: 'text-warning', Failed: 'text-danger', Queued: 'text-info', Publishing: 'text-info' };
-    return (['Instagram', 'Facebook'] as const).filter(p => s[p] && s[p] !== 'Removed').map(p => ({
-      platform: p, icon: p === 'Instagram' ? 'bi-instagram' : 'bi-facebook', cls: cls[s[p]!] ?? 'text-muted', label: socialStatusLabel(s[p] as SocialStatus)
+    return (['Instagram', 'Facebook', 'Threads'] as const).filter(p => s[p] && s[p] !== 'Removed').map(p => ({
+      platform: p, icon: socialIcon(p), cls: cls[s[p]!] ?? 'text-muted', label: socialStatusLabel(s[p] as SocialStatus)
     }));
   }
 
