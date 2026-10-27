@@ -24,7 +24,8 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
             <div class="fs-7 text-muted">Connect Instagram and Facebook in <a routerLink="/social" [queryParams]="{ tab: 'settings' }">Social media → Settings</a> to post this product.</div>
           } @else {
             @for (pl of d.platforms; track pl.platform) {
-              <div class="d-flex justify-content-between align-items-start gap-2 py-2 border-bottom">
+              <div class="py-2 border-bottom">
+              <div class="d-flex justify-content-between align-items-start gap-2">
                 <div class="min-w-0">
                   <div class="fw-bold fs-7"><i [class]="'bi me-1 ' + icon(pl.platform)"></i>{{ name(pl.platform) }}</div>
                   @if (!pl.enabled) { <div class="fs-8 text-muted">Not connected, or switched off in Settings</div> }
@@ -38,7 +39,7 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
                 @if (pl.status) { <span [class]="cls(pl.status)">{{ label(pl.status) }}</span> } @else if (pl.enabled) { <span class="badge-soft badge-soft-secondary">Not posted</span> }
               </div>
               @if (pl.enabled) {
-                <div class="d-flex flex-wrap gap-1 py-2">
+                <div class="d-flex flex-wrap gap-1 mt-2">
                   @switch (pl.status) {
                     @case ('Queued') {
                       <button class="btn btn-sm btn-phoenix-secondary" (click)="post(pl.platform, true)">Post now</button>
@@ -74,6 +75,7 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
                   }
                 </div>
               }
+              </div>
             }
             @if (!d.publishable) { <div class="fs-8 text-muted mt-1">Publish the product and add a photo before posting.</div> }
             <button class="btn btn-link btn-sm px-0 mt-1" (click)="showPreview.set(!showPreview())">{{ showPreview() ? 'Hide' : 'Preview' }} caption ({{ d.photos.length }} photo{{ d.photos.length === 1 ? '' : 's' }})</button>
@@ -92,7 +94,10 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
             <div class="border-top mt-2 pt-2">
               <div class="d-flex justify-content-between align-items-center">
                 <div class="fw-bold fs-7"><i class="bi bi-camera-reels me-1"></i>Reel video</div>
-                @if (!reel() && !making()) { <button class="btn btn-sm btn-phoenix-secondary" (click)="makeReel(true)">Make reel</button> }
+                @if (!making()) {
+                  @if (reel()) { <button class="btn btn-sm btn-phoenix-secondary" (click)="makeReel(true, true)" title="Make the video again, e.g. after changing the product"><i class="bi bi-arrow-repeat me-1"></i>Remake reel</button> }
+                  @else { <button class="btn btn-sm btn-phoenix-secondary" (click)="makeReel(true)">Make reel</button> }
+                }
               </div>
               @if (making()) { <div class="fs-8 text-muted mt-1"><span class="spinner-border spinner-border-sm me-1"></span>Making the video (up to a minute)…</div> }
               @if (reel(); as r) {
@@ -170,10 +175,10 @@ export class SocialCardComponent {
     this.api.post(`admin/social/posts/${pl.postId}/delete`).subscribe(() => { this.toast.success(`${socialName(pl.platform)} post deleted`); this.load(); });
   }
 
-  makeReel(music: boolean) {
+  makeReel(music: boolean, remake = false) {
     this.making.set(true);
-    this.api.post<ReelFile>(`admin/social/products/${this.productId()}/reel`, undefined, { music }).subscribe({
-      next: r => { this.reel.set(r); this.making.set(false); },
+    this.api.post<ReelFile>(`admin/social/products/${this.productId()}/reel`, undefined, { music, remake }).subscribe({
+      next: r => { this.reel.set({ ...r, video: r.video + '?v=' + Date.now() }); this.making.set(false); if (remake) this.toast.success('Reel made again'); },
       error: () => this.making.set(false)
     });
   }
