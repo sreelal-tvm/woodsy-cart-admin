@@ -31,6 +31,7 @@ import { SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialSt
                   @else if (pl.status === 'Queued') { <div class="fs-8 text-muted">Posts {{ pl.scheduledAt | date: 'EEE d MMM, h:mm a' }}</div> }
                   @else if (pl.publishedAt) { <div class="fs-8 text-muted">Posted {{ pl.publishedAt | date: 'd MMM y' }}@if (pl.permalink) { · <a [href]="pl.permalink" target="_blank" rel="noopener">View</a> }</div> }
                   @if (pl.status === 'OutOfDate' && pl.changes.length) { <div class="fs-8 text-warning">Changed: {{ pl.changes.join(', ') }}</div> }
+                  @if (pl.status === 'OutOfDate' && pl.platform === 'Instagram') { <div class="fs-8 text-muted">Instagram doesn't let apps edit a caption. Copy the new one, paste it in the Instagram app (post → ⋯ → Edit), then click "Mark as updated".</div> }
                   @if (pl.lastError && pl.status !== 'Published') { <div class="fs-8 text-danger">{{ pl.lastError }}</div> }
                 </div>
                 @if (pl.status) { <span [class]="cls(pl.status)">{{ label(pl.status) }}</span> } @else if (pl.enabled) { <span class="badge-soft badge-soft-secondary">Not posted</span> }
@@ -52,9 +53,11 @@ import { SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialSt
                         <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'mark-updated')" title="After pasting the caption into the Instagram app">Mark as updated</button>
                       }
                       <button class="btn btn-sm btn-phoenix-secondary" (click)="replace(pl)">Replace post</button>
+                      <button class="btn btn-sm btn-phoenix-secondary" (click)="remove(pl)">Delete post</button>
                     }
                     @case ('Published') {
                       <button class="btn btn-sm btn-phoenix-secondary" (click)="replace(pl)" title="Delete and post again">Replace post</button>
+                      <button class="btn btn-sm btn-phoenix-secondary" (click)="remove(pl)">Delete post</button>
                     }
                     @case ('Publishing') { <span class="fs-8 text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Posting…</span> }
                     @default {
@@ -128,6 +131,11 @@ export class SocialCardComponent {
   replace(pl: SocialState) {
     if (!confirm(`Delete the ${pl.platform} post and post this product again? Likes and comments on the old post are lost.`)) return;
     this.api.post(`admin/social/posts/${pl.postId}/replace`).subscribe(() => { this.toast.success('Old post deleted; posting again within a minute'); this.load(); });
+  }
+
+  remove(pl: SocialState) {
+    if (!confirm(`Delete this product's ${pl.platform} post? Likes and comments on it are lost. You can post the product again later.`)) return;
+    this.api.post(`admin/social/posts/${pl.postId}/delete`).subscribe(() => { this.toast.success(`${pl.platform} post deleted`); this.load(); });
   }
 
   copyCaption(pl: SocialState) {

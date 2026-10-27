@@ -126,7 +126,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
             @if (!c.connected || showConnect()) {
               <ol class="fs-8 text-muted ps-3">
                 <li>developers.facebook.com → <b>My Apps</b> → your app → <b>App settings → Basic</b>: copy the <b>App ID</b> and <b>App secret</b>.</li>
-                <li><b>Tools → Graph API Explorer</b>: pick your app, <b>Get User Access Token</b> with: <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_posts</code>, <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>business_management</code>. Allow your Page and Instagram account, then copy the token.</li>
+                <li><b>Tools → Graph API Explorer</b>: pick your app, <b>Get User Access Token</b> with: <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_posts</code>, <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>instagram_manage_contents</code>, <code>business_management</code>. Allow your Page and Instagram account, then copy the token.</li>
                 <li>Paste all three below. Only an encrypted Page token is kept; the secret and this token are not stored.</li>
               </ol>
               <div class="row g-2">
