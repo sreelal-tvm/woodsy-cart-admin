@@ -7,7 +7,7 @@ import { Lookups, Paged, ProductRow } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { ModalComponent, PagerComponent } from '../../shared/ui';
-import { SocialPlatform, SocialQueueResult, SocialStatus, socialIcon, socialStatusLabel } from '../social/social-models';
+import { SOCIAL_PLATFORMS, SocialPlatform, SocialQueueResult, SocialStatus, socialIcon, socialName, socialStatusLabel } from '../social/social-models';
 
 @Component({
   selector: 'wc-products',
@@ -217,8 +217,8 @@ export class ProductsPage {
   socialBadges(s?: Partial<Record<SocialPlatform, string>>) {
     if (!s) return [];
     const cls: Record<string, string> = { Published: 'text-success', OutOfDate: 'text-warning', Failed: 'text-danger', Queued: 'text-info', Publishing: 'text-info' };
-    return (['Instagram', 'Facebook', 'Threads'] as const).filter(p => s[p] && s[p] !== 'Removed').map(p => ({
-      platform: p, icon: socialIcon(p), cls: cls[s[p]!] ?? 'text-muted', label: socialStatusLabel(s[p] as SocialStatus)
+    return SOCIAL_PLATFORMS.filter(p => s[p] && s[p] !== 'Removed').map(p => ({
+      platform: socialName(p), icon: socialIcon(p), cls: cls[s[p]!] ?? 'text-muted', label: socialStatusLabel(s[p] as SocialStatus)
     }));
   }
 

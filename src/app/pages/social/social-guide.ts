@@ -122,6 +122,8 @@ import { SocialSettings } from './social-models';
           <li><b>Include the price</b> / <b>Show MRP and savings</b>, <b>WhatsApp number</b> (with 91, e.g. 917892200921), <b>City</b>, <b>Extra hashtags</b> (3–5 is best).</li>
           <li><b>Template</b>: the caption layout for Instagram and Facebook. Words in curly brackets like <code>{{ '{price}' }}</code> are filled in from the product; a line whose field is empty is left out. <b>Reset to default</b> undoes your changes.</li>
           <li><b>Threads text</b>: a shorter layout (Threads allows 500 characters) with a clickable product link, and one <b>Topic tag</b> (e.g. Furniture).</li>
+          <li><b>Reels</b>: switch on <b>Also post a Reel</b> to post a short video of each product to Instagram and Facebook, at the <b>Reel times</b> (one a day, e.g. 18:00, is a good pace).</li>
+          <li><b>Reel music</b>: upload a few free tracks (YouTube Studio → <b>Audio library</b> → filter "No attribution required", or <b>Pixabay Music</b>) with <b>Upload a track</b>. Each product always uses the same track. With no tracks, reels have no music.</li>
           <li>Click <b>Save settings</b>.</li>
         </ul>
       </details>
@@ -135,6 +137,7 @@ import { SocialSettings } from './social-models';
           <li>Each product is posted <b>once</b> per platform; products already posted are skipped.</li>
           <li><b>Price changed after posting?</b> Facebook updates by itself. Instagram shows <b>Out of date</b>: click <b>Copy updated caption</b>, then in the Instagram app open the post → ⋯ → <b>Edit</b>, paste, save, and click <b>Mark as updated</b>. Threads can't be edited: <b>Keep as is</b> or <b>Replace post</b>.</li>
           <li><b>Delete post</b> removes it from that platform; the product can be posted again later.</li>
+          <li><b>Reel with a trending song (by hand):</b> product → Social media card → <b>Reel video</b> → <b>Make reel</b> → <b>Download (add trending song)</b>. On the phone: Instagram → <b>+</b> → <b>Reel</b> → choose the video → <b>Music</b> → pick a trending song → paste the caption (<b>Preview caption</b> → copy) → Share. Trending songs can only be added this way, never automatically.</li>
           <li>The <b>Queue</b>, <b>Posted</b>, <b>Out of date</b> and <b>Failed</b> tabs on this page show everything in one place.</li>
         </ul>
       </details>
@@ -151,6 +154,7 @@ import { SocialSettings } from './social-models';
             <tr><td>A post is in <b>Failed</b></td><td>Read the red message on it, fix that, then click <b>Try again</b>.</td></tr>
             <tr><td>Publish button grey in the Meta app</td><td>An extra use case was ticked in Part 2 step 3: create a new app with only the right ones and delete the old one.</td></tr>
             <tr><td>The status on a product looks old</td><td>Reload the product page; it checks again when it opens.</td></tr>
+            <tr><td>"Reels need FFmpeg"</td><td>The video tool is missing on the server (C:\\WoodsyCart\\tools\\ffmpeg). See the handbook, section 15.</td></tr>
           </tbody>
         </table>
       </details>

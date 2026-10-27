@@ -6,7 +6,7 @@ import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { ModalComponent } from '../../shared/ui';
-import { SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIcon, socialStatusCls, socialStatusLabel } from './social-models';
+import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIcon, socialName, socialStatusCls, socialStatusLabel } from './social-models';
 
 /** Product page → "Social media": the product's Instagram, Facebook and Threads post, with its caption. */
 @Component({
@@ -26,13 +26,13 @@ import { SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIc
             @for (pl of d.platforms; track pl.platform) {
               <div class="d-flex justify-content-between align-items-start gap-2 py-2 border-bottom">
                 <div class="min-w-0">
-                  <div class="fw-bold fs-7"><i [class]="'bi me-1 ' + icon(pl.platform)"></i>{{ pl.platform }}</div>
+                  <div class="fw-bold fs-7"><i [class]="'bi me-1 ' + icon(pl.platform)"></i>{{ name(pl.platform) }}</div>
                   @if (!pl.enabled) { <div class="fs-8 text-muted">Not connected, or switched off in Settings</div> }
                   @else if (pl.status === 'Queued') { <div class="fs-8 text-muted">Posts {{ pl.scheduledAt | date: 'EEE d MMM, h:mm a' }}</div> }
                   @else if (pl.publishedAt) { <div class="fs-8 text-muted">Posted {{ pl.publishedAt | date: 'd MMM y' }}@if (pl.permalink) { · <a [href]="pl.permalink" target="_blank" rel="noopener">View</a> }</div> }
                   @if (pl.status === 'OutOfDate' && pl.changes.length) { <div class="fs-8 text-warning">Changed: {{ pl.changes.join(', ') }}</div> }
                   @if (pl.status === 'OutOfDate' && pl.platform === 'Threads') { <div class="fs-8 text-muted">Threads posts can't be edited after 15 minutes. Keep it as it is, or replace it when the price changed.</div> }
-                  @if (pl.status === 'OutOfDate' && pl.platform === 'Instagram') { <div class="fs-8 text-muted">Instagram doesn't let apps edit a caption. Copy the new one, paste it in the Instagram app (post → ⋯ → Edit), then click "Mark as updated".</div> }
+                  @if (pl.status === 'OutOfDate' && (pl.platform === 'Instagram' || pl.platform === 'InstagramReel')) { <div class="fs-8 text-muted">Instagram doesn't let apps edit a caption. Copy the new one, paste it in the Instagram app (post → ⋯ → Edit), then click "Mark as updated".</div> }
                   @if (pl.lastError && pl.status !== 'Published') { <div class="fs-8 text-danger">{{ pl.lastError }}</div> }
                 </div>
                 @if (pl.status) { <span [class]="cls(pl.status)">{{ label(pl.status) }}</span> } @else if (pl.enabled) { <span class="badge-soft badge-soft-secondary">Not posted</span> }
@@ -49,7 +49,7 @@ import { SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIc
                       <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'remove')">Remove</button>
                     }
                     @case ('OutOfDate') {
-                      @if (pl.platform === 'Instagram') {
+                      @if (pl.platform === 'Instagram' || pl.platform === 'InstagramReel') {
                         <button class="btn btn-sm btn-primary" (click)="copyCaption(pl)"><i class="bi bi-clipboard me-1"></i>Copy updated caption</button>
                         <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'mark-updated')" title="After pasting the caption into the Instagram app">Mark as updated</button>
                       }
@@ -88,6 +88,24 @@ import { SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIc
               }
             }
           }
+          @if (d.photos.length) {
+            <div class="border-top mt-2 pt-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="fw-bold fs-7"><i class="bi bi-camera-reels me-1"></i>Reel video</div>
+                @if (!reel() && !making()) { <button class="btn btn-sm btn-phoenix-secondary" (click)="makeReel(true)">Make reel</button> }
+              </div>
+              @if (making()) { <div class="fs-8 text-muted mt-1"><span class="spinner-border spinner-border-sm me-1"></span>Making the video (up to a minute)…</div> }
+              @if (reel(); as r) {
+                <video [src]="r.video | media" [poster]="r.cover | media" controls playsinline class="rounded border d-block mt-2" style="width: 100%; max-width: 220px; aspect-ratio: 9 / 16; background: #000"></video>
+                <div class="fs-8 text-muted mt-1">{{ r.track ? 'Music: ' + r.track : 'No music' }}</div>
+                <div class="d-flex flex-wrap gap-1 mt-2">
+                  <button class="btn btn-sm btn-primary" (click)="downloadReel(false)" title="Then add a trending song in the Instagram app"><i class="bi bi-download me-1"></i>Download (add trending song)</button>
+                  <button class="btn btn-sm btn-phoenix-secondary" (click)="downloadReel(true)"><i class="bi bi-download me-1"></i>Download with our music</button>
+                </div>
+                <div class="fs-8 text-muted mt-1">To post by hand: Instagram → + → Reel → choose the video → <b>Music</b> → pick a trending song → paste the caption (Copy caption above) → Share.</div>
+              }
+            </div>
+          }
         }
       </div>
     </div>
@@ -115,6 +133,9 @@ export class SocialCardComponent {
   protected label = socialStatusLabel;
   protected cls = socialStatusCls;
   protected icon = socialIcon;
+  protected name = socialName;
+  protected reel = signal<ReelFile | null>(null);
+  protected making = signal(false);
 
   hasThreads(d: SocialProduct) { return d.platforms.some(p => p.platform === 'Threads'); }
 
@@ -140,13 +161,26 @@ export class SocialCardComponent {
   }
 
   replace(pl: SocialState) {
-    if (!confirm(`Delete the ${pl.platform} post and post this product again? Likes and comments on the old post are lost.`)) return;
+    if (!confirm(`Delete the ${socialName(pl.platform)} post and post this product again? Likes and comments on the old post are lost.`)) return;
     this.api.post(`admin/social/posts/${pl.postId}/replace`).subscribe(() => { this.toast.success('Old post deleted; posting again within a minute'); this.load(); });
   }
 
   remove(pl: SocialState) {
-    if (!confirm(`Delete this product's ${pl.platform} post? Likes and comments on it are lost. You can post the product again later.`)) return;
-    this.api.post(`admin/social/posts/${pl.postId}/delete`).subscribe(() => { this.toast.success(`${pl.platform} post deleted`); this.load(); });
+    if (!confirm(`Delete this product's ${socialName(pl.platform)} post? Likes and comments on it are lost. You can post the product again later.`)) return;
+    this.api.post(`admin/social/posts/${pl.postId}/delete`).subscribe(() => { this.toast.success(`${socialName(pl.platform)} post deleted`); this.load(); });
+  }
+
+  makeReel(music: boolean) {
+    this.making.set(true);
+    this.api.post<ReelFile>(`admin/social/products/${this.productId()}/reel`, undefined, { music }).subscribe({
+      next: r => { this.reel.set(r); this.making.set(false); },
+      error: () => this.making.set(false)
+    });
+  }
+
+  downloadReel(music: boolean) {
+    this.toast.info('Preparing the video…');
+    this.api.download(`admin/social/products/${this.productId()}/reel/file`, `woodsycart-${this.productId()}-reel${music ? '-music' : ''}.mp4`, { music });
   }
 
   copyCaption(pl: SocialState) {

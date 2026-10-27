@@ -8,7 +8,7 @@ import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { PagerComponent } from '../../shared/ui';
 import { SocialGuideComponent } from './social-guide';
-import { SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialStatusCls, socialStatusLabel } from './social-models';
+import { MusicTrack, SOCIAL_PLATFORMS, SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialName, socialStatusCls, socialStatusLabel } from './social-models';
 
 type Tab = 'queue' | 'posted' | 'outdated' | 'failed' | 'settings';
 interface PageChoice { id: string; name: string; instagram?: string; }
@@ -77,7 +77,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                       </div>
                     </div>
                   </td>
-                  <td><i class="bi me-1" [class]="'bi me-1 ' + icon(r.platform)"></i>{{ r.platform }}</td>
+                  <td class="text-nowrap"><i [class]="'bi me-1 ' + icon(r.platform)"></i>{{ name(r.platform) }}</td>
                   <td><span [class]="cls(r.status)">{{ label(r.status) }}</span></td>
                   <td class="fs-7 text-nowrap">{{ (current() === 'queue' ? r.scheduledAt : r.publishedAt) | date: 'EEE d MMM, h:mm a' }}</td>
                   <td class="text-end text-nowrap">
@@ -88,7 +88,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                       <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'remove')">Remove</button>
                     }
                     @if (r.status === 'OutOfDate') {
-                      @if (r.platform === 'Instagram') {
+                      @if (r.platform === 'Instagram' || r.platform === 'InstagramReel') {
                         <button class="btn btn-sm btn-primary ms-1" (click)="copy(r)"><i class="bi bi-clipboard me-1"></i>Copy caption</button>
                         <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')">Mark as updated</button>
                       }
@@ -198,6 +198,27 @@ interface PageChoice { id: string; name: string; instagram?: string; }
 
         <div class="col-xl-6">
           <div class="card mb-3"><div class="card-body">
+            <h5><i class="bi bi-camera-reels me-1"></i>Reels</h5>
+            @if (!c.reelsAvailable) { <div class="alert alert-warning fs-8">Reels need FFmpeg on the server (C:\\WoodsyCart\\tools\\ffmpeg). See the handbook, section 15.</div> }
+            <p class="fs-8 text-muted">A 10–15 second video made from the product's photos, with the name, price and details on screen. Reels reach far more people who don't follow you yet.</p>
+            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="reels" [(ngModel)]="c.reelsEnabled" /><label class="form-check-label" for="reels">Also post a Reel to Instagram and Facebook for each product</label></div>
+            <label class="form-label">Reel times (India time, one reel each)</label>
+            <input class="form-control" [(ngModel)]="c.reelTimes" placeholder="18:00" [disabled]="!c.reelsEnabled" />
+            <div class="form-text mb-3">Separate from photo posts. One reel a day (evening) is a good pace; Facebook allows 30 reels a day.</div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="rmusic" [(ngModel)]="c.reelMusic" /><label class="form-check-label" for="rmusic">Add music from the tracks below</label></div>
+            <label class="form-label">Reel music</label>
+            <div class="form-text mt-0 mb-2">Only music you may use: free tracks from <b>YouTube Audio Library</b> (studio.youtube.com → Audio library, "No attribution required") or <b>Pixabay Music</b>. Each product always gets the same track; no tracks = no music. Trending film songs can't be added here — download a reel without music on the product page and add the song in the Instagram app.</div>
+            @for (t of c.musicTracks; track t.name) {
+              <div class="d-flex justify-content-between align-items-center border rounded px-2 py-1 mb-1 fs-7">
+                <span class="text-truncate"><i class="bi bi-music-note-beamed me-1"></i>{{ t.name }} <span class="text-muted fs-8">· {{ (t.size / 1048576).toFixed(1) }} MB</span></span>
+                <button class="btn btn-sm btn-link text-danger p-0" (click)="deleteTrack(t)" title="Delete"><i class="bi bi-trash"></i></button>
+              </div>
+            } @empty { <div class="fs-8 text-muted mb-1">No tracks uploaded — reels are made without music.</div> }
+            <label class="btn btn-sm btn-phoenix-secondary mt-1 mb-0"><i class="bi bi-upload me-1"></i>Upload a track (MP3, up to 20 MB)
+              <input type="file" accept=".mp3,.m4a,.aac,.wav,audio/*" hidden (change)="uploadTrack($event)" /></label>
+          </div></div>
+
+          <div class="card mb-3"><div class="card-body">
             <h5>Caption</h5>
             <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="pr" [(ngModel)]="c.includePrice" /><label class="form-check-label" for="pr">Include the price</label></div>
             <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" id="mrp" [(ngModel)]="c.showMrp" [disabled]="!c.includePrice" /><label class="form-check-label" for="mrp">Show MRP and savings</label></div>
@@ -252,6 +273,7 @@ export class SocialPage {
   protected guide = signal(false);
   protected threadsConn = { appId: '', appSecret: '' };
   protected icon = socialIcon;
+  protected name = socialName;
   protected label = socialStatusLabel;
   protected cls = socialStatusCls;
 
@@ -294,7 +316,7 @@ export class SocialPage {
       .subscribe(r => this.rows.set(r));
   }
 
-  count(s: SocialSummary, st: SocialStatus) { return (s.counts.Instagram?.[st] ?? 0) + (s.counts.Facebook?.[st] ?? 0) + (s.counts.Threads?.[st] ?? 0); }
+  count(s: SocialSummary, st: SocialStatus) { return SOCIAL_PLATFORMS.reduce((n, p) => n + (s.counts[p]?.[st] ?? 0), 0); }
   queued(s: SocialSummary) { return this.count(s, 'Queued'); }
 
   emptyText() {
@@ -307,7 +329,7 @@ export class SocialPage {
   }
 
   replace(r: SocialPostRow) {
-    if (!confirm(`Delete the ${r.platform} post of "${r.productName}" and post it again? Likes and comments on the old post are lost.`)) return;
+    if (!confirm(`Delete the ${socialName(r.platform)} post of "${r.productName}" and post it again? Likes and comments on the old post are lost.`)) return;
     this.api.post(`admin/social/posts/${r.id}/replace`).subscribe(() => { this.toast.success('Posting again within a minute'); this.load(); this.loadSummary(); });
   }
 
@@ -335,6 +357,19 @@ export class SocialPage {
   disconnect() {
     if (!confirm('Disconnect Instagram and Facebook? Queued posts wait until you connect again.')) return;
     this.api.post('admin/social/disconnect').subscribe(() => { this.toast.success('Disconnected'); this.loadSettings(); this.loadSummary(); });
+  }
+
+  uploadTrack(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.api.upload<MusicTrack[]>('admin/social/music', file).subscribe(t => { this.cfg.update(c => c && { ...c, musicTracks: t }); this.toast.success('Track added'); });
+  }
+
+  deleteTrack(t: MusicTrack) {
+    if (!confirm(`Delete the track "${t.name}"? Reels already posted keep their music.`)) return;
+    this.api.delete<MusicTrack[]>(`admin/social/music/${encodeURIComponent(t.name)}`).subscribe(list => this.cfg.update(c => c && { ...c, musicTracks: list }));
   }
 
   connectThreads() {

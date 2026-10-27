@@ -1,4 +1,5 @@
-export type SocialPlatform = 'Instagram' | 'Facebook' | 'Threads';
+export type SocialPlatform = 'Instagram' | 'Facebook' | 'Threads' | 'InstagramReel' | 'FacebookReel';
+export const SOCIAL_PLATFORMS: SocialPlatform[] = ['Instagram', 'Facebook', 'Threads', 'InstagramReel', 'FacebookReel'];
 export type SocialStatus = 'Queued' | 'Publishing' | 'Published' | 'OutOfDate' | 'Failed' | 'Removed';
 
 export interface SocialState {
@@ -24,9 +25,16 @@ export interface SocialSettings {
   threadsConnected: boolean; threadsAppId?: string; threadsUsername?: string; threadsConnectedAt?: string; threadsTokenExpiresAt?: string;
   threadsEnabled: boolean; threadsTemplate: string; threadsCustomTemplate: boolean; threadsDefaultTemplate: string; threadsTopic?: string;
   threadsCallbackUrl?: string;
+  reelsEnabled: boolean; reelTimes: string; reelMusic: boolean; reelsAvailable: boolean; musicTracks: MusicTrack[];
 }
+export interface MusicTrack { name: string; size: number; }
+export interface ReelFile { video: string; cover: string; track?: string; }
 
-export const socialIcon = (p: SocialPlatform) => ({ Instagram: 'bi-instagram', Facebook: 'bi-facebook', Threads: 'bi-threads' })[p];
+export const socialIcon = (p: SocialPlatform) =>
+  ({ Instagram: 'bi-instagram', Facebook: 'bi-facebook', Threads: 'bi-threads', InstagramReel: 'bi-camera-reels', FacebookReel: 'bi-camera-reels' })[p];
+
+export const socialName = (p: SocialPlatform) =>
+  ({ Instagram: 'Instagram', Facebook: 'Facebook', Threads: 'Threads', InstagramReel: 'Instagram Reel', FacebookReel: 'Facebook Reel' })[p];
 
 export const socialStatusLabel = (s: SocialStatus) =>
   ({ Queued: 'In queue', Publishing: 'Posting', Published: 'Posted', OutOfDate: 'Out of date', Failed: 'Failed', Removed: 'Removed' })[s];
