@@ -27,7 +27,7 @@ import { SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIc
               <div class="d-flex justify-content-between align-items-start gap-2 py-2 border-bottom">
                 <div class="min-w-0">
                   <div class="fw-bold fs-7"><i [class]="'bi me-1 ' + icon(pl.platform)"></i>{{ pl.platform }}</div>
-                  @if (!pl.enabled) { <div class="fs-8 text-muted">Switched off in settings</div> }
+                  @if (!pl.enabled) { <div class="fs-8 text-muted">Not connected, or switched off in Settings</div> }
                   @else if (pl.status === 'Queued') { <div class="fs-8 text-muted">Posts {{ pl.scheduledAt | date: 'EEE d MMM, h:mm a' }}</div> }
                   @else if (pl.publishedAt) { <div class="fs-8 text-muted">Posted {{ pl.publishedAt | date: 'd MMM y' }}@if (pl.permalink) { · <a [href]="pl.permalink" target="_blank" rel="noopener">View</a> }</div> }
                   @if (pl.status === 'OutOfDate' && pl.changes.length) { <div class="fs-8 text-warning">Changed: {{ pl.changes.join(', ') }}</div> }

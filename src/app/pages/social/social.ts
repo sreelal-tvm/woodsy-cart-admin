@@ -22,7 +22,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
       <h2 class="page-title mb-0">Social media</h2>
       @if (sum(); as s) {
         <span [class]="s.connected ? 'badge-soft badge-soft-success' : 'badge-soft badge-soft-secondary'">
-          {{ s.connected ? 'Connected' + (s.instagram ? ' · @' + s.instagram : '') + (s.page ? ' · ' + s.page : '') + (s.threads ? ' · Threads @' + s.threads : '') : 'Not connected' }}
+          {{ s.connected ? 'Connected' + (s.instagram ? ' · Instagram @' + s.instagram : '') + (s.page ? ' · Facebook ' + s.page : '') + (s.threads ? ' · Threads @' + s.threads : '') : 'Not connected' }}
         </span>
       }
     </div>
@@ -34,6 +34,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
           <div class="kpi-label">Instagram, last 24 hours</div>
           <div class="kpi-value" [class.text-danger]="s.quota.used >= s.quota.limit">{{ s.quota.used }} / {{ s.quota.limit }}</div>
           <div class="fs-8 text-muted">{{ s.quota.fromMeta ? 'From Instagram' : 'Counted by WoodsyCart' }}</div>
+          @if (s.threadsQuota; as t) { <div class="fs-8 text-muted">Threads: {{ t.used }} / {{ t.limit }}</div> }
         </div></div>
         <div class="col-6 col-lg-3"><div class="card card-body h-100">
           <div class="kpi-label">Next post</div>

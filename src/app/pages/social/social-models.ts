@@ -13,7 +13,7 @@ export interface SocialPostRow {
 }
 export interface SocialQuota { platform: SocialPlatform; used: number; limit: number; fromMeta: boolean; }
 export interface SocialSummary {
-  connected: boolean; instagram?: string; page?: string; threads?: string; enabled: SocialPlatform[]; quota: SocialQuota; facebookLast24h: number;
+  connected: boolean; instagram?: string; page?: string; threads?: string; enabled: SocialPlatform[]; quota: SocialQuota; threadsQuota?: SocialQuota; facebookLast24h: number;
   nextPostAt?: string; postedProducts: number; notPosted: number; counts: Partial<Record<SocialPlatform, Partial<Record<SocialStatus, number>>>>;
 }
 export interface SocialSettings {
