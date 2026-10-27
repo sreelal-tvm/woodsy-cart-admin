@@ -28,6 +28,7 @@ export interface SocialSettings {
   reelsEnabled: boolean; reelTimes: string; reelMusic: boolean; reelsAvailable: boolean; musicTracks: MusicTrack[];
 }
 export interface MusicTrack { name: string; size: number; }
+export interface FeedStatus { enabled: boolean; url?: string; products: number; ready: number; fetchedAt?: string; fetchedBy?: string; }
 export interface ReelFile { video: string; cover: string; track?: string; }
 
 export const socialIcon = (p: SocialPlatform) =>

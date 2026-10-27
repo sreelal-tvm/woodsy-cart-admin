@@ -8,7 +8,7 @@ import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { PagerComponent } from '../../shared/ui';
 import { SocialGuideComponent } from './social-guide';
-import { MusicTrack, SOCIAL_PLATFORMS, SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialName, socialStatusCls, socialStatusLabel } from './social-models';
+import { FeedStatus, MusicTrack, SOCIAL_PLATFORMS, SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialName, socialStatusCls, socialStatusLabel } from './social-models';
 
 type Tab = 'queue' | 'posted' | 'outdated' | 'failed' | 'settings';
 interface PageChoice { id: string; name: string; instagram?: string; }
@@ -197,6 +197,29 @@ interface PageChoice { id: string; name: string; instagram?: string; }
         </div>
 
         <div class="col-xl-6">
+          @if (feed(); as f) {
+            <div class="card mb-3"><div class="card-body">
+              <h5><i class="bi bi-shop me-1"></i>Product feed (Meta catalog)</h5>
+              <p class="fs-8 text-muted">A list of all published products (price, offer price, stock, photos, link) that Meta reads every day into a catalog in <b>Commerce Manager</b>. Needed for an Instagram/Facebook Shop and catalog ads.</p>
+              <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="feed" [ngModel]="f.enabled" (ngModelChange)="setFeed($event)" /><label class="form-check-label" for="feed">Publish the product feed</label></div>
+              @if (f.enabled) {
+                @if (f.url) {
+                  <div class="d-flex gap-2 align-items-center mb-2"><code class="user-select-all fs-8">{{ f.url }}</code>
+                    <button class="btn btn-sm btn-phoenix-secondary py-0" (click)="copyText(f.url)"><i class="bi bi-clipboard"></i></button></div>
+                } @else { <div class="alert alert-warning fs-8 py-1">The feed needs the API's public https address (Smtp:ApiUrl); it works on the live and QA servers.</div> }
+                <div class="fs-8 mb-2">
+                  <b>{{ f.ready }}</b> of {{ f.products }} products in the feed
+                  @if (f.ready < f.products) { <span class="text-muted">· photos for the rest are being prepared (about 40 every 10 minutes)</span> }
+                  <br />Last read {{ f.fetchedAt ? (f.fetchedAt | date: 'd MMM, h:mm a') + (isMeta(f.fetchedBy) ? ' by Meta' : '') : 'never' }}
+                </div>
+                <ol class="fs-8 text-muted ps-3 mb-0">
+                  <li><a href="https://business.facebook.com/commerce" target="_blank" rel="noopener">Commerce Manager</a> → <b>Add catalog</b> → <b>E-commerce</b> → <b>Upload product info</b> → owner: WoodsyCart business → Create.</li>
+                  <li>Catalog → <b>Data sources</b> → <b>Add items</b> → <b>Data feed</b> → <b>Use a URL</b> → paste the address above → schedule <b>Daily</b> → currency <b>INR</b> → Upload.</li>
+                  <li>Then <b>Settings → Business assets</b>: connect the catalog to the WoodsyCart Page and Instagram account, and apply for Instagram Shopping (Commerce Manager shows whether WoodsyCart is eligible).</li>
+                </ol>
+              }
+            </div></div>
+          }
           <div class="card mb-3"><div class="card-body">
             <h5><i class="bi bi-camera-reels me-1"></i>Reels</h5>
             @if (!c.reelsAvailable) { <div class="alert alert-warning fs-8">Reels need FFmpeg on the server (C:\\WoodsyCart\\tools\\ffmpeg). See the handbook, section 15.</div> }
@@ -271,6 +294,7 @@ export class SocialPage {
   protected conn: { appId: string; appSecret: string; userToken: string; pageId: string | null } = { appId: '', appSecret: '', userToken: '', pageId: null };
   protected showThreads = signal(false);
   protected guide = signal(false);
+  protected feed = signal<FeedStatus | null>(null);
   protected threadsConn = { appId: '', appSecret: '' };
   protected icon = socialIcon;
   protected name = socialName;
@@ -308,7 +332,19 @@ export class SocialPage {
       this.cfg.set(c); this.conn.appId = c.metaAppId ?? ''; this.threadsConn.appId = c.threadsAppId ?? '';
       if (!c.connected && !c.threadsConnected && !c.metaAppId) this.guide.set(true);
     });
+    this.api.get<FeedStatus>('admin/social/feed').subscribe(f => this.feed.set(f));
   }
+
+  setFeed(enabled: boolean) {
+    this.api.post<FeedStatus>('admin/social/feed', { enabled }).subscribe(f => {
+      this.feed.set(f);
+      this.toast.success(enabled ? 'Product feed published' : 'Product feed switched off');
+    });
+  }
+
+  isMeta(agent?: string) { return !!agent && /facebook|meta/i.test(agent); }
+
+  copyText(text: string) { navigator.clipboard.writeText(text).then(() => this.toast.success('Copied')); }
 
   load() {
     const status: Record<string, SocialStatus> = { queue: 'Queued', posted: 'Published', outdated: 'OutOfDate', failed: 'Failed' };
