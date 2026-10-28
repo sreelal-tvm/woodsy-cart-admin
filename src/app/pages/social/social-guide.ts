@@ -143,6 +143,24 @@ import { SocialSettings } from './social-models';
       </details>
 
       <!-- Part 7 -->
+      <details class="border rounded p-2 mb-2">
+        <summary class="fw-bold">Part 7 · Product feed for Meta (optional, 20 minutes, only once)</summary>
+        <p class="fs-7 mt-2 mb-2">Sends all products, prices, stock and photos to a Meta <b>catalog</b> once a day, for Facebook catalog ads and Instagram Shopping. It keeps itself up to date after this.</p>
+        <ol class="fs-7 mb-2">
+          <li>On the <b>Settings</b> tab, card <b>Product feed (Meta catalog)</b> → turn on <b>Publish the product feed</b>.</li>
+          <li>Wait until the card says all products are ready (about 2 hours the first time), then click <b>Copy</b> next to the feed address.</li>
+          <li>Open <b>business.facebook.com/commerce</b> → <b>Add products</b>.</li>
+          <li>Catalog type <b>E-commerce</b> → <b>Upload product info</b> → owner: the <b>WoodsyCart</b> business portfolio → name it (for example WoodsyCart_Catalog_Products) → <b>Create</b>.</li>
+          <li>In the catalog: <b>Data sources</b> → <b>Add items</b> → <b>Data feed</b> → <b>Use a URL</b> → paste the feed address. Leave username and password empty.</li>
+          <li>Schedule <b>Daily</b> (a quiet time such as 3:00 AM), currency <b>INR</b> → <b>Upload</b>.</li>
+          <li>Commerce Manager → <b>Settings</b> → <b>General</b> → <b>Default language and country</b> → English, India.</li>
+          <li>Check: the card here shows <b>Last read by Meta</b> with a time, and the catalog's <b>Products</b> page lists your products.</li>
+        </ol>
+        <p class="fs-8 text-muted mb-1"><b>Don't click:</b> Store locations → Connect, Associate sources, Assign partner, or the Pixel, ads and checkout prompts. None of them are needed.</p>
+        <p class="fs-8 text-muted mb-0"><b>Instagram Shopping</b> (product tags) needs a <b>Business</b> Instagram account and is by invitation in India. WoodsyCart stays on a Creator account so hand-made reels keep the trending songs.</p>
+      </details>
+
+      <!-- Troubleshooting -->
       <details class="border rounded p-2 mb-0">
         <summary class="fw-bold">If something goes wrong</summary>
         <table class="table table-sm fs-8 mt-2 mb-0">
@@ -155,6 +173,7 @@ import { SocialSettings } from './social-models';
             <tr><td>Publish button grey in the Meta app</td><td>An extra use case was ticked in Part 2 step 3: create a new app with only the right ones and delete the old one.</td></tr>
             <tr><td>The status on a product looks old</td><td>Reload the product page; it checks again when it opens.</td></tr>
             <tr><td>"Reels need FFmpeg"</td><td>The video tool is missing on the server (C:\\WoodsyCart\\tools\\ffmpeg). See the handbook, section 15.</td></tr>
+            <tr><td>Commerce Manager shows feed errors, or <b>Last read by Meta</b> is old</td><td>Check the feed switch is on, open the feed address in a browser (it should download a file), then in Commerce Manager → <b>Data sources</b> → the feed → <b>Fetch now</b>. Send the <b>Issues</b> list to your developer.</td></tr>
           </tbody>
         </table>
       </details>
