@@ -17,7 +17,7 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
     @for (i of issues(); track i) { <div class="alert alert-warning fs-7 py-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ i }}</div> }
     <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
       <select class="form-select form-select-sm w-auto" [(ngModel)]="show" (ngModelChange)="page.set(1); load()">
-        <option value="unread">New</option><option value="all">All comments</option>
+        <option value="unread">New</option><option value="drafts">Drafted answers</option><option value="all">All comments</option>
       </select>
       <select class="form-select form-select-sm w-auto" [(ngModel)]="account" (ngModelChange)="page.set(1); load()">
         <option value="">All accounts</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="threads">Threads</option>
@@ -44,10 +44,26 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
         <div class="fs-7 mb-1" style="white-space: pre-line">{{ c.text }}</div>
         @for (r of c.replies; track r.id) {
           <div class="ms-4 ps-2 border-start fs-7 mt-1">
-            <b>{{ r.author }}</b> @if (r.fromUs) { <span class="badge-soft badge-soft-success ms-1">You</span> }
+            <b>{{ r.author }}</b> @if (r.fromUs) { <span class="badge-soft badge-soft-success ms-1">{{ r.auto ? 'Auto' : 'You' }}</span> }
             <span class="text-muted fs-8 ms-1">{{ r.postedAt | date: 'd MMM, h:mm a' }}</span>
             <div style="white-space: pre-line">{{ r.text }}</div>
           </div>
+        }
+        @if (c.suggestedReply) {
+          <div class="border rounded p-2 mt-2 bg-body-tertiary">
+            <div class="fs-8 text-muted mb-1"><i class="bi bi-magic me-1"></i>Suggested reply · {{ c.suggestedTopic }} · {{ c.suggestedSource === 'AI' ? 'Claude' : 'Rules' }}
+              @if (!c.suggestedComplete) { <span class="text-warning ms-1">· some details are missing: check before sending</span> }</div>
+            <div class="fs-7 mb-2" style="white-space: pre-line">{{ c.suggestedReply }}</div>
+            <div class="d-flex flex-wrap gap-1">
+              <button class="btn btn-sm btn-primary" [disabled]="sending() === c.id" (click)="send(c, c.suggestedReply!)">Send</button>
+              <button class="btn btn-sm btn-phoenix-secondary" (click)="drafts[c.id] = c.suggestedReply!">Edit</button>
+              <button class="btn btn-sm btn-phoenix-secondary" (click)="dismiss(c)">Dismiss</button>
+            </div>
+          </div>
+        } @else if (c.replyState === 'NeedsYou') {
+          <div class="fs-8 text-warning mt-2"><i class="bi bi-person-exclamation me-1"></i>Needs you: {{ c.suggestedTopic === 'Unhappy?' ? 'this sounds unhappy, so it was not answered automatically.' : 'not answered automatically.' }}</div>
+        } @else if (!c.fromUs) {
+          <button class="btn btn-link btn-sm px-0 mt-1" (click)="redraft(c)"><i class="bi bi-magic me-1"></i>Draft an answer</button>
         }
         <div class="d-flex gap-2 mt-2">
           <textarea class="form-control form-control-sm" rows="1" [placeholder]="'Reply as ' + name(c.platform) + ' account…'"
@@ -58,7 +74,7 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
         </div>
       </div></div>
     } @empty {
-      <div class="card"><div class="empty-state"><i class="bi bi-chat-heart"></i>{{ show === 'unread' ? 'No new comments.' : 'No comments yet.' }}</div></div>
+      <div class="card"><div class="empty-state"><i class="bi bi-chat-heart"></i>{{ show === 'unread' ? 'No new comments.' : show === 'drafts' ? 'No drafted answers waiting.' : 'No comments yet.' }}</div></div>
     }
     <wc-pager [page]="page()" [pageSize]="20" [total]="rows().total" (pageChange)="page.set($event); load()" />
     <div class="fs-8 text-muted mt-2">Comments are checked every 10 minutes for posts of the last 2 days, then hourly, and every 6 hours after 2 weeks (up to 90 days). New comments are emailed to the admins (Email &amp; notifications → "New social media comments").</div>
@@ -72,7 +88,7 @@ export class SocialCommentsComponent {
   protected issues = signal<string[]>([]);
   protected page = signal(1);
   protected sending = signal<number | null>(null);
-  protected show: 'unread' | 'all' = 'unread';
+  protected show: 'unread' | 'drafts' | 'all' = 'unread';
   protected account = '';
   /** Comments the WoodsyCart accounts wrote themselves (remembered in this browser). */
   protected own = (() => { try { return localStorage.getItem('wc_social_own_comments') === '1'; } catch { return false; } })();
@@ -87,7 +103,7 @@ export class SocialCommentsComponent {
 
   /** First open: show all comments when there are no new ones. */
   load(first = false) {
-    this.api.get<Paged<SocialComment>>('admin/social/comments', { unread: this.show === 'unread', account: this.account || undefined, own: this.own, page: this.page(), pageSize: 20 })
+    this.api.get<Paged<SocialComment>>('admin/social/comments', { unread: this.show === 'unread', drafts: this.show === 'drafts', account: this.account || undefined, own: this.own, page: this.page(), pageSize: 20 })
       .subscribe(r => {
         if (first && r.total === 0 && this.show === 'unread') { this.show = 'all'; this.load(); return; }
         this.rows.set(r);
@@ -96,15 +112,26 @@ export class SocialCommentsComponent {
 
   saveOwn() { try { localStorage.setItem('wc_social_own_comments', this.own ? '1' : '0'); } catch { /* private window */ } }
 
-  reply(c: SocialComment) {
-    const text = this.drafts[c.id]?.trim();
+  reply(c: SocialComment) { this.send(c, this.drafts[c.id] ?? ''); }
+
+  dismiss(c: SocialComment) {
+    this.api.post(`admin/social/comments/${c.id}/dismiss`).subscribe(() =>
+      this.rows.update(p => ({ ...p, items: p.items.map(x => x.id === c.id ? { ...x, suggestedReply: undefined, replyState: 'Dismissed' as const } : x) })));
+  }
+
+  redraft(c: SocialComment) {
+    this.api.post(`admin/social/comments/${c.id}/redraft`).subscribe(() => { this.load(); });
+  }
+
+  send(c: SocialComment, body: string) {
+    const text = body.trim();
     if (!text) return;
     this.sending.set(c.id);
     this.api.post<SocialReply>(`admin/social/comments/${c.id}/reply`, { text }).subscribe({
       next: r => {
         this.sending.set(null);
         delete this.drafts[c.id];
-        this.rows.update(p => ({ ...p, items: p.items.map(x => x.id === c.id ? { ...x, unread: false, replies: [...x.replies, r] } : x) }));
+        this.rows.update(p => ({ ...p, items: p.items.map(x => x.id === c.id ? { ...x, unread: false, suggestedReply: undefined, replyState: 'Sent' as const, replies: [...x.replies, r] } : x) }));
         this.toast.success('Reply posted');
         this.changed.emit();
       },

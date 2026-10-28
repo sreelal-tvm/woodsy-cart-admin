@@ -51,10 +51,15 @@ export const socialStatusLabel = (s: SocialStatus) =>
 export const socialStatusCls = (s: SocialStatus) =>
   'badge-soft badge-soft-' + ({ Queued: 'info', Publishing: 'info', Published: 'success', OutOfDate: 'warning', Failed: 'danger', Removed: 'secondary' })[s];
 
-export interface SocialReply { id: number; author: string; text: string; postedAt: string; fromUs: boolean; }
+export interface SocialReply { id: number; author: string; text: string; postedAt: string; fromUs: boolean; auto: boolean; }
+export type AutoReplyState = 'None' | 'Drafted' | 'Sent' | 'Dismissed' | 'NeedsYou';
+export type AutoReplyMode = 'Off' | 'Suggest' | 'Auto';
+export interface AutoReplySettings { mode: AutoReplyMode; ai: boolean; hasAiKey: boolean; aiModel: string; perHour: number; models: string[]; }
+export interface CommentSuggestion { reply?: string; topic: string; source: string; complete: boolean; why?: string; }
 export interface SocialComment {
   id: number; postId: number; productId: number; productName: string; image?: string; platform: SocialPlatform; permalink?: string;
   author: string; text: string; postedAt: string; unread: boolean; replies: SocialReply[]; fromUs: boolean;
+  replyState: AutoReplyState; suggestedReply?: string; suggestedTopic?: string; suggestedSource?: string; suggestedComplete: boolean;
 }
 export interface SocialPlatformTotals { platform: SocialPlatform; posts: number; views?: number; reach?: number; likes: number; comments: number; shares?: number; saves?: number; }
 export interface SocialTopPost { id: number; productId: number; productName: string; image?: string; platform: SocialPlatform; permalink?: string; publishedAt?: string; stats: SocialStats; }

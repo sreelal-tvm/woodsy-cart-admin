@@ -11,7 +11,7 @@ import { PagerComponent } from '../../shared/ui';
 import { SocialCommentsComponent } from './social-comments';
 import { SocialGuideComponent } from './social-guide';
 import { SocialPerformanceComponent } from './social-performance';
-import { FeedStatus, MusicTrack, SOCIAL_PLATFORMS, SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialName, socialStatusCls, socialStatusLabel, statLine } from './social-models';
+import { FeedStatus, MusicTrack, SOCIAL_PLATFORMS, SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialName, socialStatusCls, socialStatusLabel, statLine, AutoReplySettings, AutoReplyMode, CommentSuggestion } from './social-models';
 
 type Tab = 'queue' | 'posted' | 'outdated' | 'failed' | 'comments' | 'performance' | 'settings';
 interface PageChoice { id: string; name: string; instagram?: string; }
@@ -261,6 +261,55 @@ interface PageChoice { id: string; name: string; instagram?: string; }
             <div class="form-text">Each time, a product without a story in the last week is chosen: festival offers first, then products posted in the last 3 days, then the one longest without a story. Switching this off takes the automatic stories out of the queue.</div>
           </div></div>
 
+          @if (ar(); as a) {
+          <div class="card mb-3"><div class="card-body">
+            <h5><i class="bi bi-magic me-1"></i>Answers to comments</h5>
+            <p class="fs-8 text-muted">Questions like "price?", "size?", "colours?", "kitne ka hai" are answered from the product's own details (price, offer, size, colours, material, warranty, delivery). Complaints and anything unclear are always left for you.</p>
+            <div class="d-flex flex-wrap gap-3 mb-2">
+              @for (m of modes; track m.key) {
+                <div class="form-check mb-0"><input class="form-check-input" type="radio" name="armode" [id]="'ar-' + m.key" [value]="m.key" [(ngModel)]="a.mode" />
+                  <label class="form-check-label" [for]="'ar-' + m.key">{{ m.label }}</label></div>
+              }
+            </div>
+            <div class="form-text mb-3">{{ modeHelp(a.mode) }}</div>
+            @if (a.mode === 'Auto') {
+              <label class="form-label">Automatic replies per hour (at most)</label>
+              <input type="number" class="form-control mb-3" min="1" max="60" [(ngModel)]="a.perHour" style="max-width: 140px" />
+            }
+            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="ar-ai" [(ngModel)]="a.ai" />
+              <label class="form-check-label" for="ar-ai">Use Claude for comments the rules don't recognise</label></div>
+            <div class="row g-2 mb-2">
+              <div class="col-md-7"><label class="form-label">Claude API key</label>
+                <input type="password" class="form-control" autocomplete="off" [(ngModel)]="aiKey" [placeholder]="a.hasAiKey ? 'Saved — paste a new key to replace it' : 'sk-ant-…'" /></div>
+              <div class="col-md-5"><label class="form-label">Model</label>
+                <select class="form-select" [(ngModel)]="a.aiModel">
+                  @for (m of a.models; track m) { <option [value]="m">{{ modelName(m) }}</option> }
+                </select></div>
+            </div>
+            <div class="form-text mb-3">From platform.claude.com → API keys. Stored encrypted; each unclear comment costs about ₹1 with Opus, much less with Haiku.
+              @if (a.hasAiKey) { <a href="" class="ms-1" (click)="$event.preventDefault(); clearKey = true; saveAutoReply()">Remove the saved key</a> }</div>
+            <button class="btn btn-sm btn-primary mb-3" (click)="saveAutoReply()">Save answers settings</button>
+
+            <div class="border-top pt-2">
+              <div class="fw-bold fs-7 mb-1">Try it (nothing is posted)</div>
+              <div class="row g-2">
+                <div class="col-4"><input class="form-control form-control-sm" [(ngModel)]="tryProduct" placeholder="Product, e.g. WC498" /></div>
+                <div class="col-4"><select class="form-select form-select-sm" [(ngModel)]="tryPlatform">
+                  <option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="Threads">Threads</option></select></div>
+                <div class="col-12"><input class="form-control form-control-sm" [(ngModel)]="tryText" placeholder='A comment, e.g. "price and size?"' (keyup.enter)="tryReply()" /></div>
+              </div>
+              <button class="btn btn-sm btn-phoenix-secondary mt-2" (click)="tryReply()">Try</button>
+              @if (tried(); as t) {
+                <div class="border rounded p-2 mt-2 fs-7 bg-body-tertiary">
+                  @if (t.reply) { <div class="fs-8 text-muted mb-1">{{ t.topic }} · {{ t.source === 'AI' ? 'Claude' : 'Rules' }}{{ t.complete ? '' : ' · some details missing (stays a draft)' }}</div>
+                    <div style="white-space: pre-line">{{ t.reply }}</div> }
+                  @else { <div class="text-muted">No answer: {{ t.why }}</div> }
+                </div>
+              }
+            </div>
+          </div></div>
+          }
+
           <div class="card mb-3"><div class="card-body">
             <h5>Caption</h5>
             <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="pr" [(ngModel)]="c.includePrice" /><label class="form-check-label" for="pr">Include the price</label></div>
@@ -322,6 +371,16 @@ export class SocialPage {
   protected label = socialStatusLabel;
   protected cls = socialStatusCls;
   protected stats = statLine;
+  protected ar = signal<AutoReplySettings | null>(null);
+  protected aiKey = '';
+  protected clearKey = false;
+  protected tryProduct = '';
+  protected tryPlatform = 'Instagram';
+  protected tryText = '';
+  protected tried = signal<CommentSuggestion | null>(null);
+  protected modes: { key: AutoReplyMode; label: string }[] = [
+    { key: 'Off', label: 'Off' }, { key: 'Suggest', label: 'Suggest (I send)' }, { key: 'Auto', label: 'Automatic' }
+  ];
 
   constructor() {
     effect(() => {
@@ -357,6 +416,33 @@ export class SocialPage {
       if (!c.connected && !c.threadsConnected && !c.metaAppId) this.guide.set(true);
     });
     this.api.get<FeedStatus>('admin/social/feed').subscribe(f => this.feed.set(f));
+    this.api.get<AutoReplySettings>('admin/social/auto-reply').subscribe(a => this.ar.set(a));
+  }
+
+  modeHelp(m: AutoReplyMode) {
+    return ({
+      Off: 'No answers are drafted.',
+      Suggest: 'An answer is drafted under each new question on the Comments tab; you check it and click Send.',
+      Auto: 'Answers with every detail found are sent automatically (a few at a time, at most the number per hour below, once per person per post). Answers with missing details, payment questions and complaints wait for you.'
+    })[m];
+  }
+
+  modelName(m: string) { return ({ 'claude-opus-5-5': 'Claude Opus 5.5 (best)', 'claude-haiku-5-5': 'Claude Haiku 5.5 (cheaper)' } as Record<string, string>)[m] ?? m; }
+
+  saveAutoReply() {
+    const a = this.ar()!;
+    this.api.put<AutoReplySettings>('admin/social/auto-reply', { mode: a.mode, ai: a.ai, aiKey: this.aiKey || null, clearAiKey: this.clearKey, aiModel: a.aiModel, perHour: a.perHour })
+      .subscribe({
+        next: s => { this.ar.set(s); this.aiKey = ''; this.clearKey = false; this.toast.success('Answers settings saved'); },
+        error: () => { this.clearKey = false; }
+      });
+  }
+
+  tryReply() {
+    const id = Number(this.tryProduct.replace(/\D/g, ''));
+    if (!id || !this.tryText.trim()) { this.toast.info('Enter a product code and a comment.'); return; }
+    this.api.post<CommentSuggestion>('admin/social/auto-reply/test', { productId: id, text: this.tryText, platform: this.tryPlatform, author: 'customer' })
+      .subscribe(t => this.tried.set(t));
   }
 
   setFeed(enabled: boolean) {
