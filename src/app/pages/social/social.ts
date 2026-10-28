@@ -280,13 +280,13 @@ interface PageChoice { id: string; name: string; instagram?: string; }
               <label class="form-check-label" for="ar-ai">Use Claude for comments the rules don't recognise</label></div>
             <div class="row g-2 mb-2">
               <div class="col-md-7"><label class="form-label">Claude API key</label>
-                <input type="password" class="form-control" autocomplete="off" [(ngModel)]="aiKey" [placeholder]="a.hasAiKey ? 'Saved — paste a new key to replace it' : 'sk-ant-…'" /></div>
+                <input type="password" class="form-control" autocomplete="off" [(ngModel)]="aiKey" [disabled]="!a.ai" [placeholder]="a.hasAiKey ? 'Saved — paste a new key to replace it' : 'sk-ant-…'" /></div>
               <div class="col-md-5"><label class="form-label">Model</label>
-                <select class="form-select" [(ngModel)]="a.aiModel">
-                  @for (m of a.models; track m) { <option [value]="m">{{ modelName(m) }}</option> }
+                <select class="form-select" [(ngModel)]="a.aiModel" [disabled]="!a.ai">
+                  @for (m of a.models; track m.id) { <option [value]="m.id">{{ m.name }}{{ modelNote(m.id) }}</option> }
                 </select></div>
             </div>
-            <div class="form-text mb-3">From platform.claude.com → API keys. Stored encrypted; each unclear comment costs about ₹1 with Opus, much less with Haiku.
+            <div class="form-text mb-3">From platform.claude.com → API keys. Stored encrypted. Once a key is saved, the list shows every model that key can use. Each unclear comment costs about ₹1 with Opus 5.5, much less with Haiku 5.5.
               @if (a.hasAiKey) { <a href="" class="ms-1" (click)="$event.preventDefault(); clearKey = true; saveAutoReply()">Remove the saved key</a> }</div>
             <button class="btn btn-sm btn-primary mb-3" (click)="saveAutoReply()">Save answers settings</button>
 
@@ -427,7 +427,7 @@ export class SocialPage {
     })[m];
   }
 
-  modelName(m: string) { return ({ 'claude-opus-5-5': 'Claude Opus 5.5 (best)', 'claude-haiku-5-5': 'Claude Haiku 5.5 (cheaper)' } as Record<string, string>)[m] ?? m; }
+  modelNote(id: string) { return ({ 'claude-opus-5-5': ' (recommended)', 'claude-haiku-5-5': ' (cheapest)' } as Record<string, string>)[id] ?? ''; }
 
   saveAutoReply() {
     const a = this.ar()!;

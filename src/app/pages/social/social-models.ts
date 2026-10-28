@@ -54,7 +54,7 @@ export const socialStatusCls = (s: SocialStatus) =>
 export interface SocialReply { id: number; author: string; text: string; postedAt: string; fromUs: boolean; auto: boolean; }
 export type AutoReplyState = 'None' | 'Drafted' | 'Sent' | 'Dismissed' | 'NeedsYou';
 export type AutoReplyMode = 'Off' | 'Suggest' | 'Auto';
-export interface AutoReplySettings { mode: AutoReplyMode; ai: boolean; hasAiKey: boolean; aiModel: string; perHour: number; models: string[]; }
+export interface AutoReplySettings { mode: AutoReplyMode; ai: boolean; hasAiKey: boolean; aiModel: string; perHour: number; models: { id: string; name: string }[]; }
 export interface CommentSuggestion { reply?: string; topic: string; source: string; complete: boolean; why?: string; }
 export interface SocialComment {
   id: number; postId: number; productId: number; productName: string; image?: string; platform: SocialPlatform; permalink?: string;
