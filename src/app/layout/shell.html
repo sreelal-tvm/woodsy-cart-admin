@@ -11,7 +11,7 @@
         <p class="nav-group-title">{{ g.title }}</p>
         @for (i of g.items; track i.link) {
           <a class="nav-item-link" [routerLink]="i.link" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: i.link === '/products' }" [title]="i.label">
-            <i class="bi {{ i.icon }}"></i><span class="label">{{ i.label }}</span>
+            <i class="bi {{ i.icon }}"></i><span class="label">{{ i.label }}@if (i.link === '/social' && social.unread()) { <span class="badge rounded-pill bg-danger ms-1">{{ social.unread() }}</span> }</span>
           </a>
         }
       </div>

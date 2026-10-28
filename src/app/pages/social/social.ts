@@ -4,19 +4,22 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { Paged } from '../../core/models';
+import { SocialBadge } from '../../core/social-badge';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { PagerComponent } from '../../shared/ui';
+import { SocialCommentsComponent } from './social-comments';
 import { SocialGuideComponent } from './social-guide';
-import { FeedStatus, MusicTrack, SOCIAL_PLATFORMS, SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialName, socialStatusCls, socialStatusLabel } from './social-models';
+import { SocialPerformanceComponent } from './social-performance';
+import { FeedStatus, MusicTrack, SOCIAL_PLATFORMS, SocialPostRow, SocialSettings, SocialStatus, SocialSummary, socialIcon, socialName, socialStatusCls, socialStatusLabel, statLine } from './social-models';
 
-type Tab = 'queue' | 'posted' | 'outdated' | 'failed' | 'settings';
+type Tab = 'queue' | 'posted' | 'outdated' | 'failed' | 'comments' | 'performance' | 'settings';
 interface PageChoice { id: string; name: string; instagram?: string; }
 
 /** Admin → Marketing → Social media: Instagram, Facebook and Threads posting of products. */
 @Component({
   selector: 'wc-social',
-  imports: [FormsModule, RouterLink, DatePipe, PagerComponent, SocialGuideComponent, ...SHARED_PIPES],
+  imports: [FormsModule, RouterLink, DatePipe, PagerComponent, SocialGuideComponent, SocialCommentsComponent, SocialPerformanceComponent, ...SHARED_PIPES],
   template: `
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
       <h2 class="page-title mb-0">Social media</h2>
@@ -55,10 +58,17 @@ interface PageChoice { id: string; name: string; instagram?: string; }
     }
 
     <div class="filter-pills mb-3">
-      @for (t of tabs; track t.key) { <a [class.active]="current() === t.key" (click)="setTab(t.key)">{{ t.label }}</a> }
+      @for (t of tabs; track t.key) {
+        <a [class.active]="current() === t.key" (click)="setTab(t.key)">{{ t.label }}
+          @if (t.key === 'comments' && sum()?.unreadComments) { <span class="badge rounded-pill bg-danger ms-1">{{ sum()!.unreadComments }}</span> }</a>
+      }
     </div>
 
-    @if (current() !== 'settings') {
+    @if (current() === 'comments') {
+      <wc-social-comments (changed)="loadSummary()" />
+    } @else if (current() === 'performance') {
+      <wc-social-performance />
+    } @else if (current() !== 'settings') {
       <div class="card">
         <div class="table-responsive">
           <table class="table align-middle mb-0">
@@ -79,7 +89,8 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                   </td>
                   <td class="text-nowrap"><i [class]="'bi me-1 ' + icon(r.platform)"></i>{{ name(r.platform) }}</td>
                   <td><span [class]="cls(r.status)">{{ label(r.status) }}</span></td>
-                  <td class="fs-7 text-nowrap">{{ (current() === 'queue' ? r.scheduledAt : r.publishedAt) | date: 'EEE d MMM, h:mm a' }}</td>
+                  <td class="fs-7 text-nowrap">{{ (current() === 'queue' ? r.scheduledAt : r.publishedAt) | date: 'EEE d MMM, h:mm a' }}
+                    @if (r.stats) { <div class="fs-8 text-muted">{{ stats(r.stats) }}</div> }</td>
                   <td class="text-end text-nowrap">
                     @if (r.permalink) { <a class="btn btn-sm btn-phoenix-secondary" [href]="r.permalink" target="_blank" rel="noopener">View</a> }
                     @if (r.status === 'Queued') { <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'remove')">Remove</button> }
@@ -281,7 +292,8 @@ export class SocialPage {
 
   protected tabs: { key: Tab; label: string }[] = [
     { key: 'queue', label: 'Queue' }, { key: 'posted', label: 'Posted' }, { key: 'outdated', label: 'Out of date' },
-    { key: 'failed', label: 'Failed' }, { key: 'settings', label: 'Settings' }
+    { key: 'failed', label: 'Failed' }, { key: 'comments', label: 'Comments' }, { key: 'performance', label: 'Performance' },
+    { key: 'settings', label: 'Settings' }
   ];
   protected current = signal<Tab>('queue');
   protected sum = signal<SocialSummary | null>(null);
@@ -300,6 +312,7 @@ export class SocialPage {
   protected name = socialName;
   protected label = socialStatusLabel;
   protected cls = socialStatusCls;
+  protected stats = statLine;
 
   constructor() {
     effect(() => {
@@ -322,10 +335,12 @@ export class SocialPage {
   setTab(t: Tab) {
     this.current.set(t);
     this.page.set(1);
-    if (t === 'settings') this.loadSettings(); else this.load();
+    if (t === 'settings') this.loadSettings(); else if (t !== 'comments' && t !== 'performance') this.load();
   }
 
-  loadSummary() { this.api.get<SocialSummary>('admin/social/summary').subscribe(s => this.sum.set(s)); }
+  private badge = inject(SocialBadge);
+
+  loadSummary() { this.api.get<SocialSummary>('admin/social/summary').subscribe(s => { this.sum.set(s); this.badge.unread.set(s.unreadComments); }); }
 
   loadSettings() {
     this.api.get<SocialSettings>('admin/social/settings').subscribe(c => {
@@ -357,7 +372,7 @@ export class SocialPage {
 
   emptyText() {
     return ({ queue: 'Nothing in the queue. Tick products on the Products page and choose "Post to social media".', posted: 'Nothing posted yet.',
-      outdated: 'All live posts match their products.', failed: 'No failed posts.', settings: '' })[this.current()];
+      outdated: 'All live posts match their products.', failed: 'No failed posts.', comments: '', performance: '', settings: '' })[this.current()];
   }
 
   act(r: SocialPostRow, action: 'remove' | 'retry' | 'mark-updated') {

@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { SocialBadge } from '../core/social-badge';
 import { AuthService } from '../core/auth';
 import { environment } from '../../environments/environment';
 
@@ -22,6 +23,8 @@ export class ShellComponent {
   protected userMenu = signal(false);
   protected dark = signal(localStorage.getItem('wc_theme') === 'dark');
   protected search = '';
+  /** New social media comments, shown next to "Social media" (checked every 5 minutes). */
+  protected social = inject(SocialBadge);
 
   protected readonly nav: NavGroup[] = [
     { title: 'Home', items: [{ label: 'E-commerce dashboard', icon: 'bi-pie-chart', link: '/dashboard' }] },
@@ -76,7 +79,12 @@ export class ShellComponent {
   constructor() {
     this.applyTheme();
     this.router.events.subscribe(() => this.mobileOpen.set(false));
+    this.checkComments();
+    const timer = setInterval(() => this.checkComments(), 5 * 60 * 1000);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
   }
+
+  private checkComments() { if (this.auth.user()) this.social.refresh(); }
 
   toggleCollapse() {
     this.collapsed.update(v => !v);

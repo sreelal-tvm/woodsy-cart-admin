@@ -6,7 +6,7 @@ import { ApiService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { ModalComponent } from '../../shared/ui';
-import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIcon, socialName, socialStatusCls, socialStatusLabel } from './social-models';
+import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState, socialIcon, socialName, socialStatusCls, socialStatusLabel, statLine } from './social-models';
 
 /** Product page → "Social media": the product's Instagram, Facebook and Threads post, with its caption. */
 @Component({
@@ -30,7 +30,8 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
                   <div class="fw-bold fs-7"><i [class]="'bi me-1 ' + icon(pl.platform)"></i>{{ name(pl.platform) }}</div>
                   @if (!pl.enabled) { <div class="fs-8 text-muted">Not connected, or switched off in Settings</div> }
                   @else if (pl.status === 'Queued') { <div class="fs-8 text-muted">Posts {{ pl.scheduledAt | date: 'EEE d MMM, h:mm a' }}</div> }
-                  @else if (pl.publishedAt) { <div class="fs-8 text-muted">Posted {{ pl.publishedAt | date: 'd MMM y' }}@if (pl.permalink) { · <a [href]="pl.permalink" target="_blank" rel="noopener">View</a> }</div> }
+                  @else if (pl.publishedAt) { <div class="fs-8 text-muted">Posted {{ pl.publishedAt | date: 'd MMM y' }}@if (pl.permalink) { · <a [href]="pl.permalink" target="_blank" rel="noopener">View</a> }</div>
+                    @if (pl.stats) { <div class="fs-8 text-muted"><i class="bi bi-graph-up me-1"></i>{{ statLine(pl.stats) || 'No views or likes yet' }}</div> } }
                   @if (pl.status === 'OutOfDate' && pl.changes.length) { <div class="fs-8 text-warning">Changed: {{ pl.changes.join(', ') }}</div> }
                   @if (pl.status === 'OutOfDate' && (pl.platform === 'Threads' || pl.platform === 'ThreadsVideo')) { <div class="fs-8 text-muted">Threads posts can't be edited after 15 minutes. Keep it as it is, or replace it when the price changed.</div> }
                   @if (pl.status === 'OutOfDate' && (pl.platform === 'Instagram' || pl.platform === 'InstagramReel')) { <div class="fs-8 text-muted">Instagram doesn't let apps edit a caption. Copy the new one, paste it in the Instagram app (post → ⋯ → Edit), then click "Mark as updated".</div> }
@@ -139,6 +140,7 @@ export class SocialCardComponent {
   protected cls = socialStatusCls;
   protected icon = socialIcon;
   protected name = socialName;
+  protected statLine = statLine;
   protected reel = signal<ReelFile | null>(null);
   protected making = signal(false);
 

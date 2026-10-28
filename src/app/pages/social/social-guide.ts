@@ -53,9 +53,9 @@ import { SocialSettings } from './social-models';
           <li>Left menu <b>Use cases</b> → <b>Add use case</b> → <b>Access the Threads API</b>.</li>
           <li>Left menu <b>Use cases</b>. On each use case click <b>Customize</b> → <b>Permissions</b> and click <b>Add</b> next to each of these:
             <ul>
-              <li><b>Manage everything on your Page:</b> pages_show_list, pages_read_engagement, pages_manage_posts, business_management</li>
-              <li><b>Manage messaging &amp; content on Instagram:</b> first choose <b>API setup with Facebook login</b>, then instagram_basic, instagram_content_publish, instagram_manage_contents</li>
-              <li><b>Access the Threads API:</b> threads_basic, threads_content_publish, threads_delete</li>
+              <li><b>Manage everything on your Page:</b> pages_show_list, pages_read_engagement, pages_manage_posts, business_management, read_insights, pages_read_user_content, pages_manage_engagement</li>
+              <li><b>Manage messaging &amp; content on Instagram:</b> first choose <b>API setup with Facebook login</b>, then instagram_basic, instagram_content_publish, instagram_manage_contents, instagram_manage_insights, instagram_manage_comments</li>
+              <li><b>Access the Threads API:</b> threads_basic, threads_content_publish, threads_delete, threads_manage_insights, threads_read_replies, threads_manage_replies</li>
             </ul></li>
           <li>Still in <b>Access the Threads API → Customize → Settings</b>, under <b>Redirect Callback URLs</b> add these two addresses (copy buttons), then <b>Save</b>.
             If it also asks for Uninstall and Delete callback URLs, use <code>https://woodsycart.com/policies/privacy</code>.
@@ -84,7 +84,7 @@ import { SocialSettings } from './social-models';
         <ol class="fs-7 mt-2">
           <li>Open <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">Graph API Explorer</a> (developers.facebook.com → Tools → Graph API Explorer).</li>
           <li>On the right: <b>Meta App</b> = WoodsyCart Social. <b>User or Page</b> = User Token.</li>
-          <li>Under <b>Permissions</b>, use <b>Add a permission</b> until all 7 of these are listed:
+          <li>Under <b>Permissions</b>, use <b>Add a permission</b> until all 12 of these are listed:
             <div class="d-flex gap-2 align-items-center my-1"><code class="user-select-all">{{ metaPermissions }}</code>
               <button class="btn btn-sm btn-phoenix-secondary py-0" (click)="copy(metaPermissions)"><i class="bi bi-clipboard"></i></button></div></li>
           <li>Click <b>Generate Access Token</b>. Facebook asks a few questions:
@@ -139,6 +139,8 @@ import { SocialSettings } from './social-models';
           <li><b>Delete post</b> removes it from that platform; the product can be posted again later.</li>
           <li><b>Reel with a trending song (by hand):</b> product → Social media card → <b>Reel video</b> → <b>Make reel</b> → <b>Download (add trending song)</b>. On the phone: Instagram → <b>+</b> → <b>Reel</b> → choose the video → <b>Music</b> → pick a trending song → paste the caption (<b>Preview caption</b> → copy) → Share. Trending songs can only be added this way, never automatically.</li>
           <li>The <b>Queue</b>, <b>Posted</b>, <b>Out of date</b> and <b>Failed</b> tabs on this page show everything in one place.</li>
+          <li><b>Comments:</b> new comments on Instagram, Facebook and Threads appear on the <b>Comments</b> tab (red number in the menu) and are emailed to you. Type your answer under a comment and click <b>Reply</b>: it is posted as the WoodsyCart account.</li>
+          <li><b>Performance:</b> views, likes, comments and shares of each post, totals per platform and your best posts. Numbers show on the <b>Posted</b> tab and the product's Social media card too.</li>
         </ul>
       </details>
 
@@ -169,6 +171,7 @@ import { SocialSettings } from './social-models';
             <tr><td>Email "Instagram and Facebook are disconnected"</td><td>Do Part 3 again (new token → Connect). Happens after a Facebook password change.</td></tr>
             <tr><td>Email "Threads needs connecting again" or "Threads is disconnected"</td><td>Do Part 4 again.</td></tr>
             <tr><td>"Insufficient permissions" when deleting</td><td>A permission is missing: check Part 2 step 6, then redo Part 3 (Instagram) or Part 4 (Threads).</td></tr>
+            <tr><td>Yellow note on <b>Comments</b> or <b>Performance</b>: "…need the … permission"</td><td>Add the permissions named in Part 2 step 6, then redo Part 3 (Instagram and Facebook) or Part 4 (Threads). The note goes away after connecting again.</td></tr>
             <tr><td>A post is in <b>Failed</b></td><td>Read the red message on it, fix that, then click <b>Try again</b>.</td></tr>
             <tr><td>Publish button grey in the Meta app</td><td>An extra use case was ticked in Part 2 step 3: create a new app with only the right ones and delete the old one.</td></tr>
             <tr><td>The status on a product looks old</td><td>Reload the product page; it checks again when it opens.</td></tr>
@@ -187,7 +190,8 @@ export class SocialGuideComponent {
   readonly s = input.required<SocialSettings>();
   readonly closed = output<void>();
   protected readonly metaPermissions =
-    'pages_show_list, pages_read_engagement, pages_manage_posts, business_management, instagram_basic, instagram_content_publish, instagram_manage_contents';
+    'pages_show_list, pages_read_engagement, pages_manage_posts, business_management, read_insights, pages_read_user_content, pages_manage_engagement, ' +
+    'instagram_basic, instagram_content_publish, instagram_manage_contents, instagram_manage_insights, instagram_manage_comments';
 
   /** Live and QA both use the one Meta app, so both addresses are registered. */
   callbackUrls() {
