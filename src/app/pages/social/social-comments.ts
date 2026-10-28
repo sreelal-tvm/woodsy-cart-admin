@@ -22,6 +22,10 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
       <select class="form-select form-select-sm w-auto" [(ngModel)]="account" (ngModelChange)="page.set(1); load()">
         <option value="">All accounts</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="threads">Threads</option>
       </select>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="own-comments" [(ngModel)]="own" (ngModelChange)="saveOwn(); page.set(1); load()" />
+        <label class="form-check-label fs-7" for="own-comments">Show our own comments</label>
+      </div>
       <button class="btn btn-sm btn-phoenix-secondary ms-auto" (click)="readAll()"><i class="bi bi-check2-all me-1"></i>Mark all as read</button>
     </div>
 
@@ -36,7 +40,7 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
           </div>
           @if (c.unread) { <span class="badge-soft badge-soft-primary">New</span> }
         </div>
-        <div class="fs-7"><b>{{ c.author }}</b> <span class="text-muted fs-8">{{ c.postedAt | date: 'd MMM, h:mm a' }}</span></div>
+        <div class="fs-7"><b>{{ c.author }}</b> @if (c.fromUs) { <span class="badge-soft badge-soft-success ms-1">You</span> } <span class="text-muted fs-8">{{ c.postedAt | date: 'd MMM, h:mm a' }}</span></div>
         <div class="fs-7 mb-1" style="white-space: pre-line">{{ c.text }}</div>
         @for (r of c.replies; track r.id) {
           <div class="ms-4 ps-2 border-start fs-7 mt-1">
@@ -50,7 +54,7 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
             [(ngModel)]="drafts[c.id]"></textarea>
           <button class="btn btn-sm btn-primary text-nowrap" [disabled]="!drafts[c.id]?.trim() || sending() === c.id" (click)="reply(c)">
             {{ sending() === c.id ? 'Sending…' : 'Reply' }}</button>
-          <button class="btn btn-sm btn-phoenix-secondary text-nowrap" (click)="mark(c, c.unread)">{{ c.unread ? 'Mark read' : 'Mark unread' }}</button>
+          @if (!c.fromUs) { <button class="btn btn-sm btn-phoenix-secondary text-nowrap" (click)="mark(c, c.unread)">{{ c.unread ? 'Mark read' : 'Mark unread' }}</button> }
         </div>
       </div></div>
     } @empty {
@@ -70,6 +74,8 @@ export class SocialCommentsComponent {
   protected sending = signal<number | null>(null);
   protected show: 'unread' | 'all' = 'unread';
   protected account = '';
+  /** Comments the WoodsyCart accounts wrote themselves (remembered in this browser). */
+  protected own = (() => { try { return localStorage.getItem('wc_social_own_comments') === '1'; } catch { return false; } })();
   protected drafts: Record<number, string> = {};
   protected icon = socialIcon;
   protected name = socialName;
@@ -81,12 +87,14 @@ export class SocialCommentsComponent {
 
   /** First open: show all comments when there are no new ones. */
   load(first = false) {
-    this.api.get<Paged<SocialComment>>('admin/social/comments', { unread: this.show === 'unread', account: this.account || undefined, page: this.page(), pageSize: 20 })
+    this.api.get<Paged<SocialComment>>('admin/social/comments', { unread: this.show === 'unread', account: this.account || undefined, own: this.own, page: this.page(), pageSize: 20 })
       .subscribe(r => {
         if (first && r.total === 0 && this.show === 'unread') { this.show = 'all'; this.load(); return; }
         this.rows.set(r);
       });
   }
+
+  saveOwn() { try { localStorage.setItem('wc_social_own_comments', this.own ? '1' : '0'); } catch { /* private window */ } }
 
   reply(c: SocialComment) {
     const text = this.drafts[c.id]?.trim();

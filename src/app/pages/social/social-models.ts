@@ -48,7 +48,7 @@ export const socialStatusCls = (s: SocialStatus) =>
 export interface SocialReply { id: number; author: string; text: string; postedAt: string; fromUs: boolean; }
 export interface SocialComment {
   id: number; postId: number; productId: number; productName: string; image?: string; platform: SocialPlatform; permalink?: string;
-  author: string; text: string; postedAt: string; unread: boolean; replies: SocialReply[];
+  author: string; text: string; postedAt: string; unread: boolean; replies: SocialReply[]; fromUs: boolean;
 }
 export interface SocialPlatformTotals { platform: SocialPlatform; posts: number; views?: number; reach?: number; likes: number; comments: number; shares?: number; saves?: number; }
 export interface SocialTopPost { id: number; productId: number; productName: string; image?: string; platform: SocialPlatform; permalink?: string; publishedAt?: string; stats: SocialStats; }
