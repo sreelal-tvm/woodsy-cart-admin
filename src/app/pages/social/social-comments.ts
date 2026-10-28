@@ -14,7 +14,7 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
   selector: 'wc-social-comments',
   imports: [FormsModule, RouterLink, DatePipe, PagerComponent, ...SHARED_PIPES],
   template: `
-    @for (i of issues(); track i) { <div class="alert alert-warning fs-7 py-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ i }}</div> }
+    @for (i of issues(); track i) { <div class="alert fs-7 py-2" [class.alert-danger]="i.startsWith('Disconnected')" [class.alert-warning]="!i.startsWith('Disconnected')"><i class="bi bi-exclamation-triangle me-1"></i>{{ i }}</div> }
     <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
       <select class="form-select form-select-sm w-auto" [(ngModel)]="show" (ngModelChange)="page.set(1); load()">
         <option value="unread">New</option><option value="drafts">Drafted answers</option><option value="all">All comments</option>

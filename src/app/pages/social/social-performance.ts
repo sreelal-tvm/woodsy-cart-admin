@@ -19,7 +19,7 @@ import { SocialPerformance, socialIcon, socialName, statNum } from './social-mod
       @if (p()?.lastRead; as t) { <span class="fs-8 text-muted ms-auto">Numbers last read {{ t | date: 'd MMM, h:mm a' }}</span> }
     </div>
     @if (p(); as d) {
-      @for (i of d.issues; track i) { <div class="alert alert-warning fs-7 py-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ i }}</div> }
+      @for (i of d.issues; track i) { <div class="alert fs-7 py-2" [class.alert-danger]="i.startsWith('Disconnected')" [class.alert-warning]="!i.startsWith('Disconnected')"><i class="bi bi-exclamation-triangle me-1"></i>{{ i }}</div> }
       <div class="card mb-3">
         <div class="table-responsive">
           <table class="table align-middle mb-0 fs-7">
