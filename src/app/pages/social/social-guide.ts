@@ -139,6 +139,7 @@ import { SocialSettings } from './social-models';
           <li><b>Delete post</b> removes it from that platform; the product can be posted again later.</li>
           <li><b>Reel with a trending song (by hand):</b> product → Social media card → <b>Reel video</b> → <b>Make reel</b> → <b>Download (add trending song)</b>. On the phone: Instagram → <b>+</b> → <b>Reel</b> → choose the video → <b>Music</b> → pick a trending song → paste the caption (<b>Preview caption</b> → copy) → Share. Trending songs can only be added this way, never automatically.</li>
           <li>The <b>Queue</b>, <b>Posted</b>, <b>Out of date</b> and <b>Failed</b> tabs on this page show everything in one place.</li>
+          <li><b>Stories:</b> product → Social media card → <b>Instagram Story</b> / <b>Facebook Story</b> → <b>Post now</b> (gone after 24 hours; <b>Post story again</b> later). <b>Download story</b> to post it by hand with a link sticker or music. For automatic stories, switch on <b>Settings → Stories</b> and choose the times.</li>
           <li><b>Comments:</b> new comments on Instagram, Facebook and Threads appear on the <b>Comments</b> tab (red number in the menu) and are emailed to you. Type your answer under a comment and click <b>Reply</b>: it is posted as the WoodsyCart account.</li>
           <li><b>Performance:</b> views, likes, comments and shares of each post, totals per platform and your best posts. Numbers show on the <b>Posted</b> tab and the product's Social media card too.</li>
         </ul>

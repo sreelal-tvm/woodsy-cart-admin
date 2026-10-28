@@ -17,7 +17,7 @@ export interface ProductRow {
   isActive: boolean; isAvailable: boolean; isFeatured: boolean; vendorPriceChanged: boolean; variantsCount: number;
   source: 'Vendor' | 'Manual'; commissionPercentOverride?: number; soldCount: number; ratingAverage: number;
   lastSyncedAt?: string; createdAt: string;
-  social?: Partial<Record<'Instagram' | 'Facebook' | 'Threads' | 'InstagramReel' | 'FacebookReel' | 'ThreadsVideo', string>>;
+  social?: Partial<Record<'Instagram' | 'Facebook' | 'Threads' | 'InstagramReel' | 'FacebookReel' | 'ThreadsVideo' | 'InstagramStory' | 'FacebookStory', string>>;
 }
 
 export interface AdminVariant {

@@ -82,7 +82,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                       <div class="min-w-0">
                         <a class="fw-bold d-block text-truncate" style="max-width: 320px" [routerLink]="['/products', r.productId]">{{ r.productName }}</a>
                         @if (r.changes.length) { <span class="fs-8 text-warning">Changed: {{ r.changes.join(', ') }}</span> }
-                        @if (r.lastError && r.status !== 'Published') { <span class="fs-8 text-danger d-block">{{ r.lastError }}</span> }
+                        @if (r.lastError && r.status !== 'Published') { <span class="fs-8 d-block" [class]="r.status === 'Queued' ? 'text-muted' : 'text-danger'">{{ r.lastError }}</span> }
                         @if (r.customCaption) { <span class="fs-8 text-muted d-block">Custom caption</span> }
                       </div>
                     </div>
@@ -250,6 +250,15 @@ interface PageChoice { id: string; name: string; instagram?: string; }
             } @empty { <div class="fs-8 text-muted mb-1">No tracks uploaded — reels are made without music.</div> }
             <label class="btn btn-sm btn-phoenix-secondary mt-1 mb-0"><i class="bi bi-upload me-1"></i>Upload a track (MP3, up to 20 MB)
               <input type="file" accept=".mp3,.m4a,.aac,.wav,audio/*" hidden (change)="uploadTrack($event)" /></label>
+          </div></div>
+
+          <div class="card mb-3"><div class="card-body">
+            <h5><i class="bi bi-phone me-1"></i>Stories</h5>
+            <p class="fs-8 text-muted">A full-screen picture of a product on your Instagram and Facebook stories, with the price and where to order. Stories disappear after 24 hours. Any product can get a story by hand from its page (Social media card → Instagram Story / Facebook Story).</p>
+            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="stories" [(ngModel)]="c.storiesEnabled" /><label class="form-check-label" for="stories">Post stories automatically</label></div>
+            <label class="form-label">Story times (India time, one story each)</label>
+            <input class="form-control" [(ngModel)]="c.storyTimes" placeholder="19:00" [disabled]="!c.storiesEnabled" />
+            <div class="form-text">Each time, a product without a story in the last week is chosen: festival offers first, then products posted in the last 3 days, then the one longest without a story. Switching this off takes the automatic stories out of the queue.</div>
           </div></div>
 
           <div class="card mb-3"><div class="card-body">

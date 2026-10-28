@@ -1,5 +1,8 @@
-export type SocialPlatform = 'Instagram' | 'Facebook' | 'Threads' | 'InstagramReel' | 'FacebookReel' | 'ThreadsVideo';
-export const SOCIAL_PLATFORMS: SocialPlatform[] = ['Instagram', 'Facebook', 'Threads', 'InstagramReel', 'FacebookReel', 'ThreadsVideo'];
+export type SocialPlatform = 'Instagram' | 'Facebook' | 'Threads' | 'InstagramReel' | 'FacebookReel' | 'ThreadsVideo' | 'InstagramStory' | 'FacebookStory';
+export const SOCIAL_PLATFORMS: SocialPlatform[] = ['Instagram', 'Facebook', 'Threads', 'InstagramReel', 'FacebookReel', 'ThreadsVideo', 'InstagramStory', 'FacebookStory'];
+export const isStory = (p: SocialPlatform) => p === 'InstagramStory' || p === 'FacebookStory';
+/** Stories are up for 24 hours. */
+export const storyExpired = (publishedAt?: string) => !!publishedAt && Date.now() - new Date(publishedAt).getTime() > 24 * 3600 * 1000;
 export type SocialStatus = 'Queued' | 'Publishing' | 'Published' | 'OutOfDate' | 'Failed' | 'Removed';
 
 export interface SocialState {
@@ -28,16 +31,19 @@ export interface SocialSettings {
   threadsEnabled: boolean; threadsTemplate: string; threadsCustomTemplate: boolean; threadsDefaultTemplate: string; threadsTopic?: string;
   threadsCallbackUrl?: string;
   reelsEnabled: boolean; reelTimes: string; reelMusic: boolean; reelsAvailable: boolean; musicTracks: MusicTrack[];
+  storiesEnabled: boolean; storyTimes: string;
 }
 export interface MusicTrack { name: string; size: number; }
 export interface FeedStatus { enabled: boolean; url?: string; products: number; ready: number; fetchedAt?: string; fetchedBy?: string; }
 export interface ReelFile { video: string; cover: string; track?: string; }
 
 export const socialIcon = (p: SocialPlatform) =>
-  ({ Instagram: 'bi-instagram', Facebook: 'bi-facebook', Threads: 'bi-threads', InstagramReel: 'bi-camera-reels', FacebookReel: 'bi-camera-reels', ThreadsVideo: 'bi-camera-reels' })[p];
+  ({ Instagram: 'bi-instagram', Facebook: 'bi-facebook', Threads: 'bi-threads', InstagramReel: 'bi-camera-reels', FacebookReel: 'bi-camera-reels', ThreadsVideo: 'bi-camera-reels',
+    InstagramStory: 'bi-phone', FacebookStory: 'bi-phone' })[p];
 
 export const socialName = (p: SocialPlatform) =>
-  ({ Instagram: 'Instagram', Facebook: 'Facebook', Threads: 'Threads', InstagramReel: 'Instagram Reel', FacebookReel: 'Facebook Reel', ThreadsVideo: 'Threads video' })[p];
+  ({ Instagram: 'Instagram', Facebook: 'Facebook', Threads: 'Threads', InstagramReel: 'Instagram Reel', FacebookReel: 'Facebook Reel', ThreadsVideo: 'Threads video',
+    InstagramStory: 'Instagram Story', FacebookStory: 'Facebook Story' })[p];
 
 export const socialStatusLabel = (s: SocialStatus) =>
   ({ Queued: 'In queue', Publishing: 'Posting', Published: 'Posted', OutOfDate: 'Out of date', Failed: 'Failed', Removed: 'Removed' })[s];
