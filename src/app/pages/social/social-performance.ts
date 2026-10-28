@@ -69,7 +69,7 @@ import { SocialPerformance, socialIcon, socialName, statNum } from './social-mod
           </table>
         </div>
       </div>
-      <div class="fs-8 text-muted mt-2">"—" = the platform doesn't give that number (Facebook gives no saves; Threads no reach). Numbers are read hourly on a post's first day, every 6 hours for a week, then daily, for 90 days.</div>
+      <div class="fs-8 text-muted mt-2">"—" = the platform doesn't give that number (Facebook gives no saves; Threads no reach). Numbers are read every 3 hours on a post's first day, then daily, for 90 days.</div>
     }
   `
 })

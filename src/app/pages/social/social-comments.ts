@@ -77,7 +77,7 @@ import { SocialComment, SocialReply, socialIcon, socialName } from './social-mod
       <div class="card"><div class="empty-state"><i class="bi bi-chat-heart"></i>{{ show === 'unread' ? 'No new comments.' : show === 'drafts' ? 'No drafted answers waiting.' : 'No comments yet.' }}</div></div>
     }
     <wc-pager [page]="page()" [pageSize]="20" [total]="rows().total" (pageChange)="page.set($event); load()" />
-    <div class="fs-8 text-muted mt-2">Comments are checked every 10 minutes for posts of the last 2 days, then hourly, and every 6 hours after 2 weeks (up to 90 days). New comments are emailed to the admins (Email &amp; notifications → "New social media comments").</div>
+    <div class="fs-8 text-muted mt-2">Comments are checked every 30 minutes for posts of the last 2 days, every 2 hours for 2 weeks, then daily (up to 90 days). New comments are emailed to the admins (Email &amp; notifications → "New social media comments").</div>
   `
 })
 export class SocialCommentsComponent {
