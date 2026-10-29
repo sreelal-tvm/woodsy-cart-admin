@@ -176,7 +176,7 @@ export interface Pincode { id: number; pincode: string; city: string; area?: str
 
 export interface BusinessSettings {
   id: number; businessName: string; legalName?: string; tagline?: string; gstRegistered: boolean; gstin?: string; pan?: string;
-  addressLine1: string; addressLine2?: string; city: string; state: string; stateCode: string; pincode: string; phone: string; whatsApp?: string; email: string;
+  addressLine1: string; addressLine2?: string; city: string; state: string; stateCode: string; pincode: string; phone: string; whatsApp?: string; supportHours?: string; email: string;
   website?: string; logoUrl?: string; invoicePrefix: string; invoiceTerms?: string; bankDetails?: string; upiId?: string;
   defaultCommissionPercent: number; defaultGstRate: number; vendorPricesIncludeGst: boolean; priceRounding: 'None' | 'Nearest10' | 'EndWith99' | 'Nearest100';
   shippingFee: number; freeShippingThreshold: number; codEnabled: boolean; codFee: number; codMaxOrderAmount: number;

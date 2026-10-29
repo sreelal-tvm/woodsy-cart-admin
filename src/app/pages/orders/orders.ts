@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { listMemory } from '../../core/list-memory';
 import { CHANNEL_ICON, CHANNEL_LABEL, OrderRow, Paged, SalesChannel } from '../../core/models';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { PagerComponent } from '../../shared/ui';
@@ -123,6 +124,7 @@ export class OrdersPage {
   protected readonly channelLabel = CHANNEL_LABEL;
   protected readonly channelKeys = Object.keys(CHANNEL_LABEL) as SalesChannel[];
   private current: Tab = this.tabs[0];
+  private memory = listMemory<{ tab: string; page: number; q: string; paymentStatus: string; paymentMethod: string; channel: string; from: string; to: string }>('orders');
 
   constructor() {
     // Re-run only when the URL's search/status/view change — not when a tab is clicked (load() reads the tab and page).
@@ -133,6 +135,13 @@ export class OrdersPage {
         const t = this.tabs.find(x => x.key === key) ?? this.tabs[0];
         this.current = t;
         this.tab.set(t.key);
+        // Back from an order: the same tab, filters and page as before
+        const m = this.memory.restore();
+        if (m) {
+          this.current = this.tabs.find(x => x.key === m.tab) ?? this.current; this.tab.set(this.current.key); this.page.set(m.page ?? 1);
+          this.q = m.q ?? ''; this.paymentStatus = m.paymentStatus ?? ''; this.paymentMethod = m.paymentMethod ?? '';
+          this.channel = m.channel ?? ''; this.from = m.from ?? ''; this.to = m.to ?? '';
+        }
         this.load();
       });
     });
@@ -147,6 +156,8 @@ export class OrdersPage {
   }
 
   load() {
+    this.memory.save({ tab: this.tab(), page: this.page(), q: this.q, paymentStatus: this.paymentStatus, paymentMethod: this.paymentMethod,
+      channel: this.channel, from: this.from, to: this.to });
     this.api.get<Paged<OrderRow>>('admin/orders', {
       search: this.q, status: this.current.status, view: this.current.view, paymentStatus: this.paymentStatus,
       paymentMethod: this.paymentMethod, channel: this.channel, from: this.from, to: this.to, page: this.page(), pageSize: 25

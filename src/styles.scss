@@ -172,3 +172,6 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.01em; }
   .wc-sidebar, .wc-topbar, .no-print { display: none !important; }
   .wc-main { margin: 0 !important; padding: 0 !important; }
 }
+
+/* Open mobile menu: the page behind it stays still */
+html.wc-no-scroll, html.wc-no-scroll body { overflow: hidden; overscroll-behavior: none; }

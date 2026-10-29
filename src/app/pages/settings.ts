@@ -37,6 +37,8 @@ interface Staff { id: number; fullName: string; email: string; phone?: string; r
             <div class="col-md-4"><label class="form-label">Phone</label><input class="form-control" [(ngModel)]="s.phone" /></div>
             <div class="col-md-4"><label class="form-label">WhatsApp (for customers)</label><input class="form-control" [(ngModel)]="s.whatsApp" /></div>
             <div class="col-md-4"><label class="form-label">Email</label><input class="form-control" [(ngModel)]="s.email" /></div>
+            <div class="col-md-8"><label class="form-label">Phone support hours</label><input class="form-control" [(ngModel)]="s.supportHours" maxlength="100" placeholder="Every day, 10am–10pm" />
+              <div class="form-text">Shown under the phone number on the Contact us page. Leave empty to show no hours.</div></div>
             <div class="col-md-4"><label class="form-label">Website</label><input class="form-control" [(ngModel)]="s.website" /></div>
             <div class="col-md-4"><label class="form-label">Instagram URL</label><input class="form-control" [(ngModel)]="s.instagramUrl" /></div>
             <div class="col-md-4"><label class="form-label">Facebook URL</label><input class="form-control" [(ngModel)]="s.facebookUrl" /></div>

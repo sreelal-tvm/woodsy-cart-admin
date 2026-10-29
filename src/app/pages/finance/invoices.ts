@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { listMemory } from '../../core/list-memory';
 import { InvoiceRow, Paged } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
@@ -60,10 +61,17 @@ export class InvoicesPage {
   protected rows = signal<Paged<InvoiceRow>>({ items: [], total: 0, page: 1, pageSize: 25 });
   protected page = signal(1);
   q = ''; from = ''; to = '';
+  private memory = listMemory<{ page: number; q: string; from: string; to: string }>('invoices');
 
-  constructor() { this.load(); }
+  constructor() {
+    // Back from an order: the same search, dates and page as before
+    const m = this.memory.restore();
+    if (m) { this.page.set(m.page ?? 1); this.q = m.q ?? ''; this.from = m.from ?? ''; this.to = m.to ?? ''; }
+    this.load();
+  }
 
   load() {
+    this.memory.save({ page: this.page(), q: this.q, from: this.from, to: this.to });
     this.api.get<Paged<InvoiceRow>>('admin/invoices', { search: this.q, from: this.from, to: this.to, page: this.page() }).subscribe(r => this.rows.set(r));
   }
 

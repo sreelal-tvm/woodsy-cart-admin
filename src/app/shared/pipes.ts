@@ -5,6 +5,16 @@ const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR',
 const inr2 = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** ₹ in Indian grouping: 1,25,000 */
+/** "Sreelal M" → "SM", "Sreelal" → "S": first letters of the first and last names (avatars). */
+@Pipe({ name: 'initials' })
+export class InitialsPipe implements PipeTransform {
+  transform(name?: string | null) {
+    const words = (name ?? '').trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return '?';
+    return (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase();
+  }
+}
+
 @Pipe({ name: 'inr' })
 export class InrPipe implements PipeTransform {
   transform(v: number | null | undefined, decimals = false): string {
@@ -50,7 +60,7 @@ export class DeltaPipe implements PipeTransform {
   }
 }
 
-export const SHARED_PIPES = [InrPipe, MediaPipe, HumanizePipe, StatusColorPipe, DeltaPipe];
+export const SHARED_PIPES = [InitialsPipe, InrPipe, MediaPipe, HumanizePipe, StatusColorPipe, DeltaPipe];
 
 export function isoDate(d: Date): string {
   const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);

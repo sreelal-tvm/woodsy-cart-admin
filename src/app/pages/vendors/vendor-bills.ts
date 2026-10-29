@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { listMemory } from '../../core/list-memory';
 import { Paged, Vendor, VendorBill } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES, isoDate } from '../../shared/pipes';
@@ -116,14 +117,25 @@ export class VendorBillsPage {
   protected page = signal(1);
   q = ''; status = ''; from = ''; to = '';
   payForm = { amount: 0, paidOn: isoDate(new Date()), reference: '' };
+  private memory = listMemory<{ page: number; q: string; status: string; from: string; to: string }>('vendor-bills');
 
   constructor() {
     this.api.get<Vendor[]>('admin/vendors').subscribe(v => this.vendors.set(v));
     // Only the URL's status triggers a reload here; paging calls load() itself.
-    effect(() => { const status = this.statusParam(); untracked(() => { this.status = status ?? ''; this.load(); }); });
+    effect(() => {
+      const status = this.statusParam();
+      untracked(() => {
+        this.status = status ?? '';
+        // Back from an order: the same filters and page as before
+        const m = this.memory.restore();
+        if (m) { this.page.set(m.page ?? 1); this.q = m.q ?? ''; this.status = m.status ?? ''; this.from = m.from ?? ''; this.to = m.to ?? ''; }
+        this.load();
+      });
+    });
   }
 
   load() {
+    this.memory.save({ page: this.page(), q: this.q, status: this.status, from: this.from, to: this.to });
     this.api.get<Paged<VendorBill>>('admin/vendor-bills', { search: this.q, status: this.status, from: this.from, to: this.to, page: this.page() }).subscribe(r => this.rows.set(r));
     this.api.get<{ outstanding: number; overdue: number; thisMonth: number; ordersWithoutBill: number }>('admin/vendor-bills/summary').subscribe(s => this.summary.set(s));
   }

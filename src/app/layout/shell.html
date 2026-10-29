@@ -1,9 +1,10 @@
-<aside class="wc-sidebar" [class.collapsed]="collapsed()" [class.open]="mobileOpen()">
+<aside class="wc-sidebar" [class.collapsed]="collapsed()" [class.open]="mobileOpen()" (click)="closeOnLink($event)">
   <div class="brand">
     <a routerLink="/dashboard" class="d-flex align-items-center gap-2">
       <img src="logo.svg" alt="" width="30" height="30" />
       <span class="brand-text">Woodsy<span class="text-primary">Cart</span></span>
     </a>
+    <button class="btn-close ms-auto d-lg-none" (click)="mobileOpen.set(false)" aria-label="Close menu"></button>
   </div>
   <nav class="nav-scroll">
     @for (g of nav; track g.title) {

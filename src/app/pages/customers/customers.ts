@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { listMemory } from '../../core/list-memory';
 import { CustomerRow, Paged } from '../../core/models';
 import { SHARED_PIPES } from '../../shared/pipes';
 import { PagerComponent } from '../../shared/ui';
@@ -30,7 +31,7 @@ import { PagerComponent } from '../../shared/ui';
               <tr>
                 <td>
                   <div class="d-flex align-items-center gap-2">
-                    <span class="avatar-sm">{{ c.fullName.charAt(0) }}</span>
+                    <span class="avatar-sm">{{ c.fullName | initials }}</span>
                     <a class="fw-bold" [routerLink]="['/customers', c.id]">{{ c.fullName }}</a>
                     @if (c.isGuest) { <span class="badge-soft badge-soft-secondary" title="Checked out without an account">Guest</span> }
                     @if (!c.isActive) { <span class="badge-soft badge-soft-danger">Blocked</span> }
@@ -53,7 +54,7 @@ import { PagerComponent } from '../../shared/ui';
     </div>
     <wc-pager [page]="page()" [pageSize]="25" [total]="rows().total" (pageChange)="page.set($event); load()" />
   `,
-  styles: [`.avatar-sm { width: 2rem; height: 2rem; border-radius: 50%; background: var(--wc-soft-primary); color: #9A5226; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }`]
+  styles: [`.avatar-sm { width: 2rem; height: 2rem; flex-shrink: 0; font-size: 0.75rem; border-radius: 50%; background: var(--wc-soft-primary); color: #9A5226; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }`]
 })
 export class CustomersPage {
   private api = inject(ApiService);
@@ -61,10 +62,17 @@ export class CustomersPage {
   protected page = signal(1);
   q = '';
   sort = 'newest';
+  private memory = listMemory<{ page: number; q: string; sort: string }>('customers');
 
-  constructor() { this.load(); }
+  constructor() {
+    // Back from a customer: the same search and page as before
+    const m = this.memory.restore();
+    if (m) { this.page.set(m.page ?? 1); this.q = m.q ?? ''; this.sort = m.sort ?? 'newest'; }
+    this.load();
+  }
 
   load() {
+    this.memory.save({ page: this.page(), q: this.q, sort: this.sort });
     this.api.get<Paged<CustomerRow>>('admin/customers', { search: this.q, sort: this.sort, page: this.page(), pageSize: 25 }).subscribe(r => this.rows.set(r));
   }
 }

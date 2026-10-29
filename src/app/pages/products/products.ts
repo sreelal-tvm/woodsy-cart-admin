@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { listMemory } from '../../core/list-memory';
 import { Lookups, Paged, ProductRow } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
@@ -169,6 +170,7 @@ export class ProductsPage {
   categoryId: number | null = null;
   sort = 'newest';
   commission: number | null = null;
+  private memory = listMemory<{ tab: string; page: number; q: string; categoryId: number | null; sort: string; social: string | null }>('products');
 
   constructor() {
     this.api.get<Lookups>('admin/products/lookups').subscribe(l => this.lookups.set(l));
@@ -179,6 +181,12 @@ export class ProductsPage {
         this.q = search ?? '';
         this.social = social ?? null;
         this.tab.set(status ?? 'all');
+        // Back from a product: the same tab, filters and page as before
+        const m = this.memory.restore();
+        if (m) {
+          this.tab.set(m.tab ?? 'all'); this.page.set(m.page ?? 1); this.q = m.q ?? ''; this.categoryId = m.categoryId ?? null;
+          this.sort = m.sort ?? 'newest'; this.social = m.social ?? null;
+        }
         this.load();
       });
     });
@@ -188,6 +196,7 @@ export class ProductsPage {
 
   load() {
     this.selected.set(new Set());
+    this.memory.save({ tab: this.tab(), page: this.page(), q: this.q, categoryId: this.categoryId, sort: this.sort, social: this.social });
     this.api.get<Paged<ProductRow>>('admin/products', {
       search: this.q, categoryId: this.categoryId, status: this.tab() === 'all' ? null : this.tab(), social: this.social, sort: this.sort, page: this.page(), pageSize: this.pageSize
     }).subscribe(r => this.rows.set(r));

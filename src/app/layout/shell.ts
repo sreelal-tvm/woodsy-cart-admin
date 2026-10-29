@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SocialBadge } from '../core/social-badge';
@@ -79,12 +79,17 @@ export class ShellComponent {
   constructor() {
     this.applyTheme();
     this.router.events.subscribe(() => this.mobileOpen.set(false));
+    // The page behind the open menu doesn't scroll (also when the menu's own scroll reaches its end)
+    effect(() => document.documentElement.classList.toggle('wc-no-scroll', this.mobileOpen()));
     this.checkComments();
     const timer = setInterval(() => this.checkComments(), 5 * 60 * 1000);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
   }
 
   private checkComments() { if (this.auth.user()) this.social.refresh(); }
+
+  /** Mobile: a link in the menu closes it, also the page already open (e.g. Orders while on Orders). */
+  closeOnLink(e: Event) { if ((e.target as HTMLElement).closest('a')) this.mobileOpen.set(false); }
 
   toggleCollapse() {
     this.collapsed.update(v => !v);

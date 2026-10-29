@@ -29,7 +29,7 @@ import { SHARED_PIPES } from '../../shared/pipes';
         <div class="col-xl-4">
           <div class="card mb-3">
             <div class="card-body text-center">
-              <div class="big-avatar mx-auto mb-2">{{ c.fullName.charAt(0) }}</div>
+              <div class="big-avatar mx-auto mb-2">{{ c.fullName | initials }}</div>
               <h4 class="mb-0">{{ c.fullName }}</h4>
               @if (c.isGuest) { <span class="badge-soft badge-soft-secondary mb-1">Guest checkout · no account yet</span> }
               <div class="text-muted fs-7">{{ c.email }}</div>
