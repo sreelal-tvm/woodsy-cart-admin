@@ -32,6 +32,7 @@ export interface SocialSettings {
   threadsCallbackUrl?: string;
   reelsEnabled: boolean; reelTimes: string; reelMusic: boolean; reelsAvailable: boolean; musicTracks: MusicTrack[];
   storiesEnabled: boolean; storyTimes: string;
+  readComments: boolean; readStats: boolean;
 }
 export interface MusicTrack { name: string; size: number; }
 export interface FeedStatus { enabled: boolean; url?: string; products: number; ready: number; fetchedAt?: string; fetchedBy?: string; }

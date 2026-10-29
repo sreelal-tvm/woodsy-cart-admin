@@ -261,6 +261,13 @@ interface PageChoice { id: string; name: string; instagram?: string; }
             <div class="form-text">Each time, a product without a story in the last week is chosen: festival offers first, then products posted in the last 3 days, then the one longest without a story. Switching this off takes the automatic stories out of the queue.</div>
           </div></div>
 
+          <div class="card mb-3"><div class="card-body">
+            <h5><i class="bi bi-chat-dots me-1"></i>Comments and numbers</h5>
+            <p class="fs-8 text-muted">Reading comments and post numbers (views, likes …) asks Instagram, Facebook and Threads every few minutes. Switched off, none of those calls are made; posting and replying by hand still work. Switch them on one at a time once the accounts are stable.</p>
+            <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="readComments" [(ngModel)]="c.readComments" /><label class="form-check-label" for="readComments">Read comments (Comments tab, emails and answers to comments)</label></div>
+            <div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" id="readStats" [(ngModel)]="c.readStats" /><label class="form-check-label" for="readStats">Read post numbers (Performance tab)</label></div>
+          </div></div>
+
           @if (ar(); as a) {
           <div class="card mb-3"><div class="card-body">
             <h5><i class="bi bi-magic me-1"></i>Answers to comments</h5>
