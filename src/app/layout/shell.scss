@@ -20,6 +20,8 @@
   &:hover { background: var(--wc-hover); color: var(--bs-emphasis-color); }
   &.active { background: var(--wc-soft-primary); color: #9A5226; .bi { color: #9A5226; } }
 }
+/* Phones: "Install the app" stays at the bottom of the menu while the links scroll */
+.install-foot { flex-shrink: 0; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--bs-border-color); }
 .collapse-btn {
   border: 0; border-top: 1px solid var(--bs-border-color); background: transparent; color: var(--wc-muted);
   align-items: center; gap: 0.7rem; padding: 0.9rem 1.5rem; font-weight: 700; font-size: 0.8rem;

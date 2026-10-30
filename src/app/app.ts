@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastService } from './core/toast.service';
+import { InstallService } from './shared/install';
 
 @Component({
   selector: 'app-root',
@@ -16,4 +17,5 @@ import { ToastService } from './core/toast.service';
 })
 export class App {
   protected toast = inject(ToastService);
+  private install = inject(InstallService); // catches the browser's install offer as early as it comes
 }

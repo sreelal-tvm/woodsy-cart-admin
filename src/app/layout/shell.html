@@ -22,6 +22,11 @@
     <i class="bi" [class.bi-arrow-bar-left]="!collapsed()" [class.bi-arrow-bar-right]="collapsed()"></i>
     <span class="label">Collapsed view</span>
   </button>
+  @if (installer.eligible()) {
+    <div class="install-foot d-lg-none">
+      <button class="btn btn-outline-primary w-100 fw-bold" (click)="mobileOpen.set(false); installer.install()"><i class="bi bi-phone me-1"></i>Install the app</button>
+    </div>
+  }
 </aside>
 @if (mobileOpen()) { <div class="sidebar-backdrop d-lg-none" (click)="mobileOpen.set(false)"></div> }
 
@@ -61,3 +66,4 @@
     <span>v1.0</span>
   </footer>
 </main>
+<wc-install />

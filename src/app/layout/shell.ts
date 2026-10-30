@@ -4,13 +4,14 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { SocialBadge } from '../core/social-badge';
 import { AuthService } from '../core/auth';
 import { environment } from '../../environments/environment';
+import { InstallComponent, InstallService } from '../shared/install';
 
 interface NavItem { label: string; icon: string; link: string; }
 interface NavGroup { title: string; items: NavItem[]; }
 
 @Component({
   selector: 'wc-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, InstallComponent],
   templateUrl: './shell.html',
   styleUrl: './shell.scss'
 })
@@ -25,6 +26,7 @@ export class ShellComponent {
   protected search = '';
   /** New social media comments, shown next to "Social media" (checked every 5 minutes). */
   protected social = inject(SocialBadge);
+  protected installer = inject(InstallService);
 
   protected readonly nav: NavGroup[] = [
     { title: 'Home', items: [{ label: 'E-commerce dashboard', icon: 'bi-pie-chart', link: '/dashboard' }] },
