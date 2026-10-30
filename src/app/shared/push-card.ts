@@ -10,7 +10,7 @@ interface PushDevice { id: number; device?: string; createdAt: string; lastSentA
 interface PushStatus { publicKey: string; thisDevice: boolean; devices: PushDevice[]; }
 
 /**
- * Admin → Email & notifications: new-order notifications on this phone or computer (Web Push through the app's service worker).
+ * Admin → Email & notifications → App notifications: team notifications on this phone or computer (Web Push through the app's service worker).
  * Each device is turned on here once; the list shows this person's other devices.
  */
 @Component({
@@ -19,7 +19,7 @@ interface PushStatus { publicKey: string; thisDevice: boolean; devices: PushDevi
   template: `
     <div class="card mb-3"><div class="card-body">
       <h5><i class="bi bi-bell me-1"></i>Notifications on this device</h5>
-      <p class="text-muted fs-7">A notification on this phone or computer for every new order — tap it to open the order.</p>
+      <p class="text-muted fs-7">Team notifications (new orders, payments, returns…) on this phone or computer — tap one to open it.</p>
       @if (!sw.isEnabled) {
         <div class="alert alert-subtle-info py-2 fs-7 mb-0">Works in the live Admin (installed app or browser), not on this test server.</div>
       } @else if (needsInstall) {

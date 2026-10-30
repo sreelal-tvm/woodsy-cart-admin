@@ -8,13 +8,17 @@ import { ToastService } from '../core/toast.service';
 import { SHARED_PIPES } from '../shared/pipes';
 import { PagerComponent } from '../shared/ui';
 import { PushCardComponent } from '../shared/push-card';
+import { PushSendComponent } from '../shared/push-send';
 import { environment } from '../../environments/environment';
 
-interface EventInfo { key: string; label: string; audience: 'Customer' | 'Admin'; description: string; }
+interface EventInfo { key: string; label: string; audience: 'Customer' | 'Admin'; description: string; group?: 'Order' | 'Promo' | 'Team'; }
 interface Settings {
   enabled: boolean; provider?: string | null; host?: string | null; port: number; useStartTls: boolean; username?: string | null; hasPassword: boolean;
   fromEmail?: string | null; fromName?: string | null; replyTo?: string | null; adminEmails: string[]; events: Record<string, boolean>;
   configured: boolean; eventCatalog: EventInfo[];
+}
+interface PushSettings {
+  customersEnabled: boolean; teamEnabled: boolean; events: Record<string, boolean>; eventCatalog: EventInfo[]; customerDevices: number; teamDevices: number;
 }
 interface LogRow { id: number; createdAt: string; event: string; to: string; subject: string; status: 'Sent' | 'Failed' | 'Skipped'; error?: string; orderId?: number; }
 
@@ -37,7 +41,7 @@ const PRESETS: Preset[] = [
 
 @Component({
   selector: 'wc-email-settings',
-  imports: [FormsModule, DatePipe, RouterLink, PagerComponent, PushCardComponent, ...SHARED_PIPES],
+  imports: [FormsModule, DatePipe, RouterLink, PagerComponent, PushCardComponent, PushSendComponent, ...SHARED_PIPES],
   styles: [`
     .preset { border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: .45rem .7rem; background: transparent; font-weight: 600; font-size: .85rem; }
     .preset.on { border-color: #9A5226; background: rgba(154, 82, 38,.08); color: #9A5226; }
@@ -47,7 +51,7 @@ const PRESETS: Preset[] = [
   `],
   template: `
     <h2 class="page-title">Email &amp; notifications</h2>
-    <p class="page-subtitle">The mail server WoodsyCart sends from, who on your team gets admin emails, and which emails go out.</p>
+    <p class="page-subtitle">The mail server WoodsyCart sends from, who on your team gets admin emails, and which emails and app notifications go out.</p>
 
     @if (s(); as s) {
       @if (s.configured) {
@@ -58,7 +62,9 @@ const PRESETS: Preset[] = [
 
       <ul class="nav nav-underline mb-3 gap-4">
         <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'server'" (click)="tab.set('server')">Mail server</a></li>
-        <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'events'" (click)="tab.set('events')">Notifications</a></li>
+        <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'events'" (click)="tab.set('events')">Email notifications</a></li>
+        <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'app'" (click)="tab.set('app'); loadPush()">App notifications</a></li>
+        <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'send'" (click)="tab.set('send')">Send notification</a></li>
         <li class="nav-item"><a class="nav-link cursor-pointer" [class.active]="tab() === 'log'" (click)="tab.set('log'); loadLog()">Sent emails</a></li>
       </ul>
 
@@ -93,7 +99,6 @@ const PRESETS: Preset[] = [
             </div>
 
             <div class="col-xl-4">
-              <wc-push-card />
               <div class="card mb-3"><div class="card-body">
                 <h5>Admin notification emails</h5>
                 <p class="text-muted fs-7">Everyone here gets the admin emails (new orders, payments, returns, enquiries…).</p>
@@ -143,6 +148,43 @@ const PRESETS: Preset[] = [
           <div class="sticky-actions d-flex justify-content-end mt-3"><button class="btn btn-primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Save notifications' }}</button></div>
         }
 
+        @case ('app') {
+          @if (p(); as p) {
+            <div class="row g-3">
+              @for (group of ['Customer', 'Admin']; track group) {
+                <div class="col-xl-6">
+                  @if (group === 'Admin') { <wc-push-card /> }
+                  <div class="card"><div class="card-body">
+                    @if (group === 'Customer') {
+                      <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" id="pushCust" [(ngModel)]="p.customersEnabled" />
+                        <label class="form-check-label fw-bold" for="pushCust">Send app notifications to customers</label></div>
+                      <p class="text-muted fs-7">To customers who turn on notifications in the app or on their order page — {{ p.customerDevices }} device{{ p.customerDevices === 1 ? '' : 's' }} so far. Sent even when email is off.</p>
+                    } @else {
+                      <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" id="pushTeam" [(ngModel)]="p.teamEnabled" />
+                        <label class="form-check-label fw-bold" for="pushTeam">Send app notifications to your team</label></div>
+                      <p class="text-muted fs-7">To every team device turned on above — {{ p.teamDevices }} device{{ p.teamDevices === 1 ? '' : 's' }} so far. Sent even when email is off.</p>
+                    }
+                    @let on = group === 'Customer' ? p.customersEnabled : p.teamEnabled;
+                    @for (sec of group === 'Customer' ? customerSections : teamSections; track sec.group) {
+                      @if (sec.title) { <div class="fs-8 fw-bold text-uppercase text-muted mt-3 mb-1" [class.opacity-50]="!on">{{ sec.title }}</div> }
+                      @if (sec.note) { <div class="fs-8 text-muted mb-1" [class.opacity-50]="!on">{{ sec.note }}</div> }
+                      @for (e of pushEventsFor(sec.group); track e.key) {
+                        <div class="ev d-flex gap-3 align-items-start" [class.opacity-50]="!on">
+                          <div class="form-check form-switch mt-1"><input class="form-check-input" type="checkbox" [id]="'pe' + e.key" [(ngModel)]="p.events[e.key]" [disabled]="!on" /></div>
+                          <label class="flex-grow-1" [for]="'pe' + e.key"><b class="d-block">{{ e.label }}</b><span class="text-muted fs-7">{{ e.description }}</span></label>
+                        </div>
+                      }
+                    }
+                  </div></div>
+                </div>
+              }
+            </div>
+            <div class="sticky-actions d-flex justify-content-end mt-3"><button class="btn btn-primary" [disabled]="saving()" (click)="savePush()">{{ saving() ? 'Saving…' : 'Save app notifications' }}</button></div>
+          } @else { <div class="skeleton" style="height: 420px"></div> }
+        }
+
+        @case ('send') { <wc-push-send /> }
+
         @case ('log') {
           <div class="filter-pills mb-3">
             @for (f of ['', 'Sent', 'Failed', 'Skipped']; track f) { <a [class.active]="logStatus === f" (click)="logStatus = f; logPage.set(1); loadLog()">{{ f || 'All' }}</a> }
@@ -178,8 +220,9 @@ export class EmailSettingsPage {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   protected readonly presets = PRESETS;
-  protected tab = signal<'server' | 'events' | 'log'>('server');
+  protected tab = signal<'server' | 'events' | 'app' | 'send' | 'log'>('server');
   protected s = signal<Settings | null>(null);
+  protected p = signal<PushSettings | null>(null);
   protected saving = signal(false);
   protected testing = signal(false);
   protected testResult = signal<{ ok: boolean; message: string } | null>(null);
@@ -214,6 +257,12 @@ export class EmailSettingsPage {
   removeAdmin(e: string) { this.s.update(s => s ? { ...s, adminEmails: s.adminEmails.filter(x => x !== e) } : s); }
 
   eventsFor(group: string) { return this.s()?.eventCatalog.filter(e => e.audience === group) ?? []; }
+  pushEventsFor(group: string) { return this.p()?.eventCatalog.filter(e => e.group === group) ?? []; }
+  protected readonly customerSections = [
+    { group: 'Order', title: 'Order updates', note: '' },
+    { group: 'Promo', title: 'Offers & reminders', note: 'Only to customers who allow offers on their phone · at most one a day each · 9 am – 9 pm.' }
+  ];
+  protected readonly teamSections = [{ group: 'Team', title: '', note: '' }];
   eventLabel(key: string) {
     const e = this.s()?.eventCatalog.find(x => x.key === key);
     return key === 'Test' ? 'Test email' : e ? `${e.label} (${e.audience === 'Admin' ? 'team' : 'customer'})` : key;
@@ -239,6 +288,17 @@ export class EmailSettingsPage {
     this.api.post<{ ok: boolean; message: string }>('admin/email/test', { to: this.testTo }).subscribe({
       next: r => { this.testing.set(false); this.testResult.set(r); },
       error: () => this.testing.set(false)
+    });
+  }
+
+  loadPush() { this.api.get<PushSettings>('admin/push/settings').subscribe(p => this.p.set(p)); }
+
+  savePush() {
+    const p = this.p()!;
+    this.saving.set(true);
+    this.api.put<PushSettings>('admin/push/settings', { customersEnabled: p.customersEnabled, teamEnabled: p.teamEnabled, events: p.events }).subscribe({
+      next: r => { this.p.set(r); this.saving.set(false); this.toast.success('App notifications saved'); },
+      error: () => this.saving.set(false)
     });
   }
 
