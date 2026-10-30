@@ -25,11 +25,11 @@ interface PageChoice { id: string; name: string; instagram?: string; }
       <h2 class="page-title mb-0">Social media</h2>
       @if (sum(); as s) {
         <span [class]="s.connected ? 'badge-soft badge-soft-success' : 'badge-soft badge-soft-secondary'">
-          {{ s.connected ? 'Connected' + (s.instagram ? ' · Instagram @' + s.instagram : '') + (s.page ? ' · Facebook ' + s.page : '') + (s.threads ? ' · Threads @' + s.threads : '') : 'Not connected' }}
+          {{ s.connected ? 'Connected' + (s.instagram ? ' · Instagram @' + s.instagram : '') + (s.page ? ' · Facebook ' + s.page : '') + (s.threads ? ' · Threads @' + s.threads : '') + (s.youtube ? ' · YouTube ' + s.youtube : '') : 'Not connected' }}
         </span>
       }
     </div>
-    <p class="page-subtitle">Posts your products to Instagram, your Facebook Page and Threads — one post per product, at a steady pace. Choose products on the <a routerLink="/products">Products</a> page (tick them, then <b>Post to social media</b>) or on each product's page.</p>
+    <p class="page-subtitle">Posts your products to Instagram, your Facebook Page, Threads and YouTube Shorts — one post per product, at a steady pace. Choose products on the <a routerLink="/products">Products</a> page (tick them, then <b>Post to social media</b>) or on each product's page.</p>
 
     @if (sum(); as s) {
       <div class="row g-3 mb-3">
@@ -103,8 +103,8 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                         <button class="btn btn-sm btn-primary ms-1" (click)="copy(r)"><i class="bi bi-clipboard me-1"></i>Copy caption</button>
                         <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')">Mark as updated</button>
                       }
-                      @if (r.platform === 'Threads' || r.platform === 'ThreadsVideo') {
-                        <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')" title="Leave the Threads post as it is">Keep as is</button>
+                      @if (r.platform === 'Threads' || r.platform === 'ThreadsVideo' || r.platform === 'YouTubeShort') {
+                        <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="act(r, 'mark-updated')" title="Leave the post as it is">Keep as is</button>
                       }
                       <button class="btn btn-sm btn-phoenix-secondary ms-1" (click)="replace(r)">Replace post</button>
                     }
@@ -119,7 +119,7 @@ interface PageChoice { id: string; name: string; instagram?: string; }
       </div>
       <wc-pager [page]="page()" [pageSize]="25" [total]="rows().total" (pageChange)="page.set($event); load()" />
       @if (current() === 'outdated') {
-        <div class="fs-8 text-muted mt-2">Instagram doesn't let apps change a caption after posting. <b>Copy caption</b>, then in the Instagram app open the post → ⋯ → <b>Edit</b>, paste and save, and click <b>Mark as updated</b> here. Likes and comments stay. Facebook posts are updated automatically. Threads posts can't be edited after 15 minutes: <b>Keep as is</b>, or <b>Replace post</b> when the price changed.</div>
+        <div class="fs-8 text-muted mt-2">Instagram doesn't let apps change a caption after posting. <b>Copy caption</b>, then in the Instagram app open the post → ⋯ → <b>Edit</b>, paste and save, and click <b>Mark as updated</b> here. Likes and comments stay. Facebook posts are updated automatically. Threads posts can't be edited after 15 minutes: <b>Keep as is</b>, or <b>Replace post</b> when the price changed. YouTube Shorts get the new title and description automatically; the video itself still shows the old name, price or details, so <b>Replace post</b> (views start again) or <b>Keep as is</b>.</div>
       }
     } @else if (cfg(); as c) {
       <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 fs-7">
@@ -193,6 +193,43 @@ interface PageChoice { id: string; name: string; instagram?: string; }
                 <div class="col-12"><button class="btn btn-primary btn-sm" (click)="connectThreads()" [disabled]="!c.threadsCallbackUrl"><i class="bi bi-threads me-1"></i>Log in to Threads</button></div>
               </div>
             }
+          </div></div>
+
+          <div class="card mb-3"><div class="card-body">
+            <h5><i class="bi bi-youtube me-1"></i>YouTube Shorts</h5>
+            @if (c.youTubeConnected) {
+              <div class="fs-7 mb-2">
+                <div>Channel: <b>{{ c.youTubeChannel }}</b>{{ c.youTubeHandle ? ' (' + c.youTubeHandle + ')' : '' }}</div>
+                <div class="text-muted fs-8">Connected {{ c.youTubeConnectedAt | date: 'd MMM y, h:mm a' }} · access renews itself</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-phoenix-secondary" (click)="showYouTube.set(!showYouTube())">Connect again</button>
+                <button class="btn btn-sm btn-outline-danger" (click)="disconnectYouTube()">Disconnect</button>
+              </div>
+            } @else {
+              <p class="fs-7 text-muted mb-2">Each product's reel is uploaded to your YouTube channel as a Short. Connect once through a Google Cloud app (free).</p>
+            }
+            @if (!c.youTubeConnected || showYouTube()) {
+              <ol class="fs-8 text-muted ps-3 mt-2">
+                <li><a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> (signed in as the channel's Google account) → new project <b>WoodsyCart</b> → <b>APIs &amp; Services → Library</b> → <b>YouTube Data API v3</b> → <b>Enable</b>.</li>
+                <li><b>OAuth consent screen</b> (Google Auth Platform): app name WoodsyCart, <b>External</b>, your email → Create. Then <b>Audience → Publish app</b> (In production): in Testing, Google ends the access after 7 days.</li>
+                <li><b>Clients → Create client → Web application</b>, name WoodsyCart; under <b>Authorised redirect URIs</b> add:
+                  <code class="d-block my-1 user-select-all">{{ c.youTubeCallbackUrl ?? 'needs Smtp:ApiUrl' }}</code></li>
+                <li>Copy the <b>Client ID</b> and <b>Client secret</b> below and log in with the Google account that owns the channel. Google says the app isn't verified: <b>Advanced → Go to WoodsyCart</b>, then allow.</li>
+              </ol>
+              <div class="row g-2">
+                <div class="col-md-6"><label class="form-label">Client ID</label><input class="form-control" [(ngModel)]="ytConn.clientId" autocomplete="off" placeholder="….apps.googleusercontent.com" /></div>
+                <div class="col-md-6"><label class="form-label">Client secret</label><input type="password" class="form-control" [(ngModel)]="ytConn.clientSecret" autocomplete="new-password"
+                  [placeholder]="c.youTubeClientId ? 'Saved — leave empty to keep it' : ''" /></div>
+                <div class="col-12"><button class="btn btn-primary btn-sm" (click)="connectYouTube()" [disabled]="!c.youTubeCallbackUrl"><i class="bi bi-google me-1"></i>Log in with Google</button></div>
+              </div>
+            }
+            <div class="border-top mt-3 pt-3">
+              <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="yt" [(ngModel)]="c.youTubeEnabled" /><label class="form-check-label" for="yt">Post Shorts to YouTube (with bulk and automatic posting too)</label></div>
+              <label class="form-label">Shorts times (India time, at most {{ c.youTubeDailyLimit }})</label>
+              <input class="form-control" [(ngModel)]="c.youTubeTimes" placeholder="17:00" [disabled]="!c.youTubeEnabled" />
+              <div class="form-text">The product's reel (see Reels) with the title "name – price | WoodsyCart", the description and #Shorts. At most {{ c.youTubeDailyLimit }} a day so YouTube doesn't see spam; the rest wait for the next time. Links in Shorts descriptions can't be clicked, so viewers use your channel's link or search the product code.</div>
+            </div>
           </div></div>
 
           <div class="card mb-3"><div class="card-body">
@@ -354,6 +391,7 @@ export class SocialPage {
   readonly tab = input<string>();
   readonly threads = input<string>();
   readonly reason = input<string>();
+  readonly youtube = input<string>();
 
   protected tabs: { key: Tab; label: string }[] = [
     { key: 'queue', label: 'Queue' }, { key: 'posted', label: 'Posted' }, { key: 'outdated', label: 'Out of date' },
@@ -373,6 +411,8 @@ export class SocialPage {
   protected guide = signal(false);
   protected feed = signal<FeedStatus | null>(null);
   protected threadsConn = { appId: '', appSecret: '' };
+  protected showYouTube = signal(false);
+  protected ytConn = { clientId: '', clientSecret: '' };
   protected icon = socialIcon;
   protected name = socialName;
   protected label = socialStatusLabel;
@@ -404,6 +444,16 @@ export class SocialPage {
         else if (r === 'cancelled') this.toast.info('Threads login cancelled');
       });
     });
+    // Back from the Google (YouTube) login
+    effect(() => {
+      const r = this.youtube(), why = this.reason();
+      untracked(() => {
+        if (r === 'connected') this.toast.success('YouTube connected');
+        else if (r === 'failed') this.toast.error('YouTube refused the connection' + (why ? ': ' + why : '.'));
+        else if (r === 'expired') this.toast.error('The Google login took too long or was opened twice. Try again.');
+        else if (r === 'cancelled') this.toast.info('Google login cancelled');
+      });
+    });
     this.loadSummary();
   }
 
@@ -419,7 +469,7 @@ export class SocialPage {
 
   loadSettings() {
     this.api.get<SocialSettings>('admin/social/settings').subscribe(c => {
-      this.cfg.set(c); this.conn.appId = c.metaAppId ?? ''; this.threadsConn.appId = c.threadsAppId ?? '';
+      this.cfg.set(c); this.conn.appId = c.metaAppId ?? ''; this.threadsConn.appId = c.threadsAppId ?? ''; this.ytConn.clientId = c.youTubeClientId ?? '';
       if (!c.connected && !c.threadsConnected && !c.metaAppId) this.guide.set(true);
     });
     this.api.get<FeedStatus>('admin/social/feed').subscribe(f => this.feed.set(f));
@@ -527,6 +577,15 @@ export class SocialPage {
 
   connectThreads() {
     this.api.post<{ url: string }>('admin/social/threads/connect', this.threadsConn).subscribe(r => window.location.href = r.url);
+  }
+
+  connectYouTube() {
+    this.api.post<{ url: string }>('admin/social/youtube/connect', this.ytConn).subscribe(r => window.location.href = r.url);
+  }
+
+  disconnectYouTube() {
+    if (!confirm('Disconnect YouTube? Queued Shorts wait until you connect again.')) return;
+    this.api.post('admin/social/youtube/disconnect').subscribe(() => { this.toast.success('YouTube disconnected'); this.loadSettings(); this.loadSummary(); });
   }
 
   disconnectThreads() {

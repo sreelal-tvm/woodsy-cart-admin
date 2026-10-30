@@ -37,6 +37,7 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
                     @if (pl.stats) { <div class="fs-8 text-muted"><i class="bi bi-graph-up me-1"></i>{{ statLine(pl.stats) || 'No views or likes yet' }}</div> } }
                   @if (pl.status === 'OutOfDate' && pl.changes.length) { <div class="fs-8 text-warning">Changed: {{ pl.changes.join(', ') }}</div> }
                   @if (pl.status === 'OutOfDate' && (pl.platform === 'Threads' || pl.platform === 'ThreadsVideo')) { <div class="fs-8 text-muted">Threads posts can't be edited after 15 minutes. Keep it as it is, or replace it when the price changed.</div> }
+                  @if (pl.status === 'OutOfDate' && pl.platform === 'YouTubeShort') { <div class="fs-8 text-muted">The title and description were updated on YouTube; the video still shows the old details. Replace the Short (views start again) or keep it as it is.</div> }
                   @if (pl.status === 'OutOfDate' && (pl.platform === 'Instagram' || pl.platform === 'InstagramReel')) { <div class="fs-8 text-muted">Instagram doesn't let apps edit a caption. Copy the new one, paste it in the Instagram app (post → ⋯ → Edit), then click "Mark as updated".</div> }
                   @if (pl.lastError && pl.status !== 'Published') { <div class="fs-8" [class]="pl.status === 'Queued' ? 'text-muted' : 'text-danger'">{{ pl.lastError }}</div> }
                 </div>
@@ -58,8 +59,8 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
                         <button class="btn btn-sm btn-primary" (click)="copyCaption(pl)"><i class="bi bi-clipboard me-1"></i>Copy updated caption</button>
                         <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'mark-updated')" title="After pasting the caption into the Instagram app">Mark as updated</button>
                       }
-                      @if (pl.platform === 'Threads' || pl.platform === 'ThreadsVideo') {
-                        <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'mark-updated')" title="Leave the Threads post as it is">Keep as is</button>
+                      @if (pl.platform === 'Threads' || pl.platform === 'ThreadsVideo' || pl.platform === 'YouTubeShort') {
+                        <button class="btn btn-sm btn-phoenix-secondary" (click)="act(pl, 'mark-updated')" title="Leave the post as it is">Keep as is</button>
                       }
                       <button class="btn btn-sm btn-phoenix-secondary" (click)="replace(pl)">Replace post</button>
                       <button class="btn btn-sm btn-phoenix-secondary" (click)="remove(pl)">Delete post</button>
@@ -101,6 +102,11 @@ import { ReelFile, SocialPlatform, SocialProduct, SocialQueueResult, SocialState
               @if (hasThreads(d)) {
                 <div class="fs-8 fw-bold mt-2 mb-1"><i class="bi bi-threads me-1"></i>Threads text</div>
                 <pre class="fs-8 bg-body-tertiary rounded p-2 mb-0" style="white-space: pre-wrap; font-family: inherit">{{ d.threadsCaption }}</pre>
+              }
+              @if (hasYouTube(d)) {
+                <div class="fs-8 fw-bold mt-2 mb-1"><i class="bi bi-youtube me-1"></i>YouTube Short</div>
+                <div class="fs-8 fw-bold bg-body-tertiary rounded-top px-2 pt-2">{{ d.youTubeTitle }}</div>
+                <pre class="fs-8 bg-body-tertiary rounded-bottom px-2 pb-2 mb-0" style="white-space: pre-wrap; font-family: inherit">{{ d.youTubeCaption }}</pre>
               }
             }
           }
@@ -175,6 +181,7 @@ export class SocialCardComponent {
   protected making = signal(false);
 
   hasThreads(d: SocialProduct) { return d.platforms.some(p => p.platform === 'Threads'); }
+  hasYouTube(d: SocialProduct) { return d.platforms.some(p => p.platform === 'YouTubeShort'); }
 
   constructor() {
     effect(() => { const id = this.productId(); if (id) this.load(); });

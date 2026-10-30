@@ -1,5 +1,5 @@
-export type SocialPlatform = 'Instagram' | 'Facebook' | 'Threads' | 'InstagramReel' | 'FacebookReel' | 'ThreadsVideo' | 'InstagramStory' | 'FacebookStory';
-export const SOCIAL_PLATFORMS: SocialPlatform[] = ['Instagram', 'Facebook', 'Threads', 'InstagramReel', 'FacebookReel', 'ThreadsVideo', 'InstagramStory', 'FacebookStory'];
+export type SocialPlatform = 'Instagram' | 'Facebook' | 'Threads' | 'InstagramReel' | 'FacebookReel' | 'ThreadsVideo' | 'InstagramStory' | 'FacebookStory' | 'YouTubeShort';
+export const SOCIAL_PLATFORMS: SocialPlatform[] = ['Instagram', 'Facebook', 'Threads', 'InstagramReel', 'FacebookReel', 'ThreadsVideo', 'InstagramStory', 'FacebookStory', 'YouTubeShort'];
 export const isStory = (p: SocialPlatform) => p === 'InstagramStory' || p === 'FacebookStory';
 /** Stories are up for 24 hours. */
 export const storyExpired = (publishedAt?: string) => !!publishedAt && Date.now() - new Date(publishedAt).getTime() > 24 * 3600 * 1000;
@@ -11,7 +11,10 @@ export interface SocialState {
 }
 /** A live post's numbers; null = that platform doesn't give it. */
 export interface SocialStats { views?: number; reach?: number; likes?: number; comments?: number; shares?: number; saves?: number; at?: string; }
-export interface SocialProduct { productId: number; caption: string; code: string; photos: string[]; connected: boolean; publishable: boolean; platforms: SocialState[]; threadsCaption: string; }
+export interface SocialProduct {
+  productId: number; caption: string; code: string; photos: string[]; connected: boolean; publishable: boolean; platforms: SocialState[]; threadsCaption: string;
+  youTubeTitle?: string; youTubeCaption?: string;
+}
 export interface SocialQueueResult { products: number; postingNow: number; scheduled: number; skipped: number; firstSlot?: string; note?: string; }
 export interface SocialPostRow {
   id: number; productId: number; productName: string; image?: string; platform: SocialPlatform; status: SocialStatus;
@@ -19,7 +22,7 @@ export interface SocialPostRow {
 }
 export interface SocialQuota { platform: SocialPlatform; used: number; limit: number; fromMeta: boolean; }
 export interface SocialSummary {
-  connected: boolean; instagram?: string; page?: string; threads?: string; enabled: SocialPlatform[]; quota: SocialQuota; threadsQuota?: SocialQuota; facebookLast24h: number;
+  connected: boolean; instagram?: string; page?: string; threads?: string; youtube?: string; enabled: SocialPlatform[]; quota: SocialQuota; threadsQuota?: SocialQuota; facebookLast24h: number;
   nextPostAt?: string; postedProducts: number; notPosted: number; unreadComments: number; counts: Partial<Record<SocialPlatform, Partial<Record<SocialStatus, number>>>>;
 }
 export interface SocialSettings {
@@ -33,6 +36,8 @@ export interface SocialSettings {
   reelsEnabled: boolean; reelTimes: string; reelMusic: boolean; reelsAvailable: boolean; musicTracks: MusicTrack[];
   storiesEnabled: boolean; storyTimes: string;
   readComments: boolean; readStats: boolean;
+  youTubeConnected: boolean; youTubeClientId?: string; youTubeChannel?: string; youTubeHandle?: string; youTubeConnectedAt?: string;
+  youTubeEnabled: boolean; youTubeTimes: string; youTubeCallbackUrl?: string; youTubeDailyLimit: number;
 }
 export interface MusicTrack { name: string; size: number; }
 export interface FeedStatus { enabled: boolean; url?: string; products: number; ready: number; fetchedAt?: string; fetchedBy?: string; }
@@ -40,11 +45,11 @@ export interface ReelFile { video: string; cover: string; track?: string; }
 
 export const socialIcon = (p: SocialPlatform) =>
   ({ Instagram: 'bi-instagram', Facebook: 'bi-facebook', Threads: 'bi-threads', InstagramReel: 'bi-camera-reels', FacebookReel: 'bi-camera-reels', ThreadsVideo: 'bi-camera-reels',
-    InstagramStory: 'bi-phone', FacebookStory: 'bi-phone' })[p];
+    InstagramStory: 'bi-phone', FacebookStory: 'bi-phone', YouTubeShort: 'bi-youtube' })[p];
 
 export const socialName = (p: SocialPlatform) =>
   ({ Instagram: 'Instagram', Facebook: 'Facebook', Threads: 'Threads', InstagramReel: 'Instagram Reel', FacebookReel: 'Facebook Reel', ThreadsVideo: 'Threads video',
-    InstagramStory: 'Instagram Story', FacebookStory: 'Facebook Story' })[p];
+    InstagramStory: 'Instagram Story', FacebookStory: 'Facebook Story', YouTubeShort: 'YouTube Short' })[p];
 
 export const socialStatusLabel = (s: SocialStatus) =>
   ({ Queued: 'In queue', Publishing: 'Posting', Published: 'Posted', OutOfDate: 'Out of date', Failed: 'Failed', Removed: 'Removed' })[s];

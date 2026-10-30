@@ -20,6 +20,7 @@ const SOURCES: Record<string, { label: string; icon: string }> = {
   instagram: { label: 'Instagram', icon: 'bi-instagram' },
   facebook: { label: 'Facebook', icon: 'bi-facebook' },
   threads: { label: 'Threads', icon: 'bi-threads' },
+  youtube: { label: 'YouTube', icon: 'bi-youtube' },
   'google-ads': { label: 'Google Ads', icon: 'bi-badge-ad' },
   google: { label: 'Google search', icon: 'bi-google' },
   other: { label: 'Other websites', icon: 'bi-globe' },
@@ -88,7 +89,7 @@ const SOURCES: Record<string, { label: string; icon: string }> = {
                 </tbody>
               </table>
             </div>
-            <div class="card-footer fs-8 text-muted">Add <code>?utm_source=instagram</code>, <code>?utm_source=facebook</code> and <code>?utm_source=threads</code> to your bio links. Product links in new automatic posts are tagged already, and Google Ads is recognised by its own click ID.</div>
+            <div class="card-footer fs-8 text-muted">Add <code>?utm_source=instagram</code>, <code>?utm_source=facebook</code>, <code>?utm_source=threads</code> and <code>?utm_source=youtube</code> to your bio and channel links. Product links in new automatic posts are tagged already, and Google Ads is recognised by its own click ID.</div>
           </div>
         </div>
         <div class="col-xl-5">
