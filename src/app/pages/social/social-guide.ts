@@ -3,19 +3,19 @@ import { ToastService } from '../../core/toast.service';
 import { ModalComponent } from '../../shared/ui';
 import { SocialSettings } from './social-models';
 
-/** Social media → Settings → "Setup guide": every step to connect Instagram, Facebook and Threads, in plain words. */
+/** Social media → Settings → "Setup guide": every step to connect Instagram, Facebook, Threads and YouTube, in plain words. */
 @Component({
   selector: 'wc-social-guide',
   imports: [ModalComponent],
   template: `
     <wc-modal title="Social media setup guide" size="lg" (closed)="closed.emit()">
       <p class="fs-7">
-        This connects WoodsyCart to your <b>Instagram</b>, <b>Facebook Page</b> and <b>Threads</b> so products can be posted from here.
+        This connects WoodsyCart to your <b>Instagram</b>, <b>Facebook Page</b>, <b>Threads</b> and <b>YouTube</b> so products can be posted from here.
         You do Parts 1–3 <b>once</b>. After that you only come back here if WoodsyCart emails you that a connection stopped working.
         Take about 30 minutes, on a computer. Open each part below and follow the steps in order.
       </p>
       <div class="alert alert-warning fs-8">
-        <b>Keep these private:</b> the <b>App secret</b>, the <b>Threads app secret</b> and the <b>access token</b> are like passwords.
+        <b>Keep these private:</b> the <b>App secret</b>, the <b>Threads app secret</b>, the <b>Google client secret</b> and the <b>access token</b> are like passwords.
         Paste them only into this Settings page — never into WhatsApp, email or chat. WoodsyCart does not store the secrets.
       </div>
 
@@ -24,6 +24,7 @@ import { SocialSettings } from './social-models';
         <li>The Facebook account that manages the <b>WoodsyCart Facebook Page</b> (you must be its admin).</li>
         <li>The <b>Instagram</b> login for @woodsycart (on your phone).</li>
         <li>The <b>Threads</b> app on your phone, logged in with the same Instagram account.</li>
+        <li>For YouTube Shorts: the <b>Google account</b> that owns (or will own) the WoodsyCart YouTube channel.</li>
       </ul>
 
       <!-- Part 1 -->
@@ -163,6 +164,47 @@ import { SocialSettings } from './social-models';
         <p class="fs-8 text-muted mb-0"><b>Instagram Shopping</b> (product tags) needs a <b>Business</b> Instagram account and is by invitation in India. WoodsyCart stays on a Creator account so hand-made reels keep the trending songs.</p>
       </details>
 
+      <!-- Part 8 -->
+      <details class="border rounded p-2 mb-2" [open]="!s().youTubeConnected">
+        <summary class="fw-bold">Part 8 · YouTube Shorts (computer, 30 minutes, only once) @if (s().youTubeConnected) { <span class="badge-soft badge-soft-success ms-1">Connected</span> }</summary>
+        <p class="fs-7 mt-2 mb-1">Each product's reel is uploaded to your YouTube channel as a Short. Use the <b>same Google account</b> for all three steps.</p>
+
+        <h6 class="fs-7 mt-2 mb-1">A · Create the channel</h6>
+        <ol class="fs-7">
+          <li>Sign in at <a href="https://www.youtube.com/" target="_blank" rel="noopener">youtube.com</a> → profile picture (top right) → <b>Create a channel</b>. Name <b>WoodsyCart</b>, handle <b>@woodsycart</b> (or the closest free one) → <b>Create channel</b>.</li>
+          <li><a href="https://studio.youtube.com/" target="_blank" rel="noopener">studio.youtube.com</a> → <b>Customisation</b>:
+            <ul>
+              <li><b>Branding</b>: profile picture (the WoodsyCart logo) and a banner of 2048 × 1152 (keep text in the middle).</li>
+              <li><b>Basic info</b>: a short description (what you sell, where you deliver), contact email, and links: <code>https://woodsycart.com/?utm_source=youtube</code>, Instagram, Facebook and Threads.</li>
+              <li>Click <b>Publish</b>.</li>
+            </ul></li>
+          <li>Copy the channel link (e.g. <code>https://www.youtube.com/&#64;woodsycart</code>) into <b>Business settings → YouTube URL</b> and save: a YouTube icon then shows in the shop's footer.</li>
+          <li>Optional: <a href="https://www.youtube.com/verify" target="_blank" rel="noopener">youtube.com/verify</a> (code by SMS) unlocks custom thumbnails. Shorts don't need it.</li>
+        </ol>
+
+        <h6 class="fs-7 mt-2 mb-1">B · Create the Google Cloud app (free)</h6>
+        <ol class="fs-7">
+          <li><a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> → project menu (top left) → <b>New project</b> → name <b>WoodsyCart</b> → <b>Create</b>, then select it.</li>
+          <li><b>APIs &amp; Services → Library</b> → search <b>YouTube Data API v3</b> → <b>Enable</b>.</li>
+          <li><b>Google Auth Platform</b> (or <b>OAuth consent screen</b>) → <b>Get started</b>: app name <b>WoodsyCart</b>, your email → audience <b>External</b> → contact email → agree → <b>Create</b>.</li>
+          <li><b>Audience</b> → <b>Publish app</b> → confirm, so it says <b>In production</b>. In <b>Testing</b>, Google ends the access after 7 days and Shorts stop.</li>
+          <li><b>Clients</b> → <b>Create client</b> → type <b>Web application</b>, name <b>WoodsyCart</b>. Under <b>Authorised redirect URIs</b> add this address (copy button) → <b>Create</b>:
+            <div class="d-flex gap-2 align-items-center my-1"><code class="user-select-all">{{ youTubeCallback() }}</code>
+              <button class="btn btn-sm btn-phoenix-secondary py-0" (click)="copy(youTubeCallback())"><i class="bi bi-clipboard"></i></button></div></li>
+          <li>Keep the window with the <b>Client ID</b> (ends in <code>.apps.googleusercontent.com</code>) and the <b>Client secret</b> open for the next step.</li>
+        </ol>
+        <p class="fs-8 text-muted">The app stays "unverified". That's fine: only you log in to it, so Google's review isn't needed.</p>
+
+        <h6 class="fs-7 mt-2 mb-1">C · Connect it here</h6>
+        <ol class="fs-7">
+          <li>Here → <b>Settings</b> tab → <b>YouTube Shorts</b> card → paste the <b>Client ID</b> and <b>Client secret</b> → <b>Log in with Google</b>.</li>
+          <li>Choose the Google account that owns the channel. Google says "Google hasn't verified this app": <b>Advanced</b> → <b>Go to WoodsyCart</b> → tick the YouTube permission → <b>Continue</b>.</li>
+          <li>You come back here with "YouTube connected" and the card shows your channel. Access renews itself.</li>
+          <li>Switch on <b>Post Shorts to YouTube</b>, choose the <b>Shorts times</b> (at most 2 a day, e.g. 17:00) → <b>Save settings</b>.</li>
+          <li>Test: open a product that has a reel → <b>Social media</b> card → YouTube Short → <b>Post now</b>. It shows on the <b>Posted</b> tab and in YouTube Studio → <b>Content</b> → <b>Shorts</b>.</li>
+        </ol>
+      </details>
+
       <!-- Troubleshooting -->
       <details class="border rounded p-2 mb-0">
         <summary class="fw-bold">If something goes wrong</summary>
@@ -173,6 +215,9 @@ import { SocialSettings } from './social-models';
             <tr><td>Email "Threads needs connecting again" or "Threads is disconnected"</td><td>Do Part 4 again.</td></tr>
             <tr><td>"Insufficient permissions" when deleting</td><td>A permission is missing: check Part 2 step 6, then redo Part 3 (Instagram) or Part 4 (Threads).</td></tr>
             <tr><td>Yellow note on <b>Comments</b> or <b>Performance</b>: "…need the … permission"</td><td>Add the permissions named in Part 2 step 6, then redo Part 3 (Instagram and Facebook) or Part 4 (Threads). The note goes away after connecting again.</td></tr>
+            <tr><td>Google shows <code>redirect_uri_mismatch</code></td><td>The address in Part 8 B step 5 is missing or mistyped: copy it again into Google Cloud → <b>Clients</b> → WoodsyCart, save, wait 5 minutes.</td></tr>
+            <tr><td>"This Google account has no YouTube channel"</td><td>You logged in with another Google account: <b>Log in with Google</b> again and pick the channel's account.</td></tr>
+            <tr><td>"Google didn't give lasting access", or YouTube stops after about a week</td><td>myaccount.google.com → <b>Security</b> → <b>Third-party connections</b> → WoodsyCart → delete; check Part 8 B step 4 says <b>In production</b>; then do Part 8 C again.</td></tr>
             <tr><td>A post is in <b>Failed</b></td><td>Read the red message on it, fix that, then click <b>Try again</b>.</td></tr>
             <tr><td>Publish button grey in the Meta app</td><td>An extra use case was ticked in Part 2 step 3: create a new app with only the right ones and delete the old one.</td></tr>
             <tr><td>The status on a product looks old</td><td>Reload the product page; it checks again when it opens.</td></tr>
@@ -200,6 +245,9 @@ export class SocialGuideComponent {
     const all = ['https://api.woodsycart.com/api/social/threads/callback', 'https://qaapi.woodsycart.com/api/social/threads/callback'];
     return here && !all.includes(here) ? [...all, here] : all;
   }
+
+  /** Where Google sends you back after the YouTube login: this API's address (the live one if it isn't known). */
+  youTubeCallback() { return this.s().youTubeCallbackUrl ?? 'https://api.woodsycart.com/api/social/youtube/callback'; }
 
   copy(text: string) {
     navigator.clipboard.writeText(text).then(() => this.toast.success('Copied'), () => this.toast.info(text));
