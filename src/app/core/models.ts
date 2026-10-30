@@ -180,7 +180,7 @@ export interface BusinessSettings {
   website?: string; logoUrl?: string; invoicePrefix: string; invoiceTerms?: string; bankDetails?: string; upiId?: string;
   defaultCommissionPercent: number; defaultGstRate: number; vendorPricesIncludeGst: boolean; priceRounding: 'None' | 'Nearest10' | 'EndWith99' | 'Nearest100';
   shippingFee: number; freeShippingThreshold: number; codEnabled: boolean; codFee: number; codMaxOrderAmount: number;
-  restrictToServiceablePincodes: boolean; defaultDeliveryDays: number; instagramUrl?: string; facebookUrl?: string; youtubeUrl?: string;
+  restrictToServiceablePincodes: boolean; defaultDeliveryDays: number; instagramUrl?: string; facebookUrl?: string; threadsUrl?: string; youtubeUrl?: string;
   createdAt?: string;
   mapsEnabled: boolean; googleMapsApiKey?: string | null;
 }

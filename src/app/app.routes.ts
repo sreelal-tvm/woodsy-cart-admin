@@ -19,6 +19,7 @@ export const routes: Routes = [
       { path: 'customers', loadComponent: () => import('./pages/customers/customers').then(m => m.CustomersPage), title: 'Customers · WoodsyCart' },
       { path: 'customers/:id', loadComponent: () => import('./pages/customers/customer-detail').then(m => m.CustomerDetailPage), title: 'Customer details · WoodsyCart' },
       { path: 'refunds', loadComponent: () => import('./pages/refunds').then(m => m.RefundsPage), title: 'Returns & refunds · WoodsyCart' },
+      { path: 'visitors', loadComponent: () => import('./pages/visitors').then(m => m.VisitorsPage), title: 'Visitors · WoodsyCart' },
       { path: 'enquiries', loadComponent: () => import('./pages/enquiries').then(m => m.EnquiriesPage), title: 'Enquiries · WoodsyCart' },
       { path: 'products', loadComponent: () => import('./pages/products/products').then(m => m.ProductsPage), title: 'Products · WoodsyCart' },
       { path: 'products/new', loadComponent: () => import('./pages/products/product-edit').then(m => m.ProductEditPage), title: 'Add product · WoodsyCart' },

@@ -33,7 +33,8 @@ export class ShellComponent {
         { label: 'Orders', icon: 'bi-bag-check', link: '/orders' },
         { label: 'Customers', icon: 'bi-people', link: '/customers' },
         { label: 'Returns & refunds', icon: 'bi-arrow-counterclockwise', link: '/refunds' },
-        { label: 'Enquiries', icon: 'bi-chat-left-text', link: '/enquiries' }
+        { label: 'Enquiries', icon: 'bi-chat-left-text', link: '/enquiries' },
+        { label: 'Visitors', icon: 'bi-person-lines-fill', link: '/visitors' }
       ]
     },
     {

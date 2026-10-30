@@ -42,6 +42,9 @@ interface Staff { id: number; fullName: string; email: string; phone?: string; r
             <div class="col-md-4"><label class="form-label">Website</label><input class="form-control" [(ngModel)]="s.website" /></div>
             <div class="col-md-4"><label class="form-label">Instagram URL</label><input class="form-control" [(ngModel)]="s.instagramUrl" /></div>
             <div class="col-md-4"><label class="form-label">Facebook URL</label><input class="form-control" [(ngModel)]="s.facebookUrl" /></div>
+            <div class="col-md-4"><label class="form-label">Threads URL</label><input class="form-control" [(ngModel)]="s.threadsUrl" placeholder="https://www.threads.com/@woodsycart" /></div>
+            <div class="col-md-4"><label class="form-label">YouTube URL</label><input class="form-control" [(ngModel)]="s.youtubeUrl" placeholder="https://www.youtube.com/@woodsycart" />
+              <div class="form-text">Your channel link; Shorts are on the same channel.</div></div>
             <div class="col-md-6"><label class="form-label">Logo for invoices (PNG/JPG)</label>
               <div class="d-flex gap-2 align-items-center">@if (s.logoUrl) { <img class="thumb" [src]="s.logoUrl | media" alt="" /> }<input type="file" class="form-control" accept="image/png,image/jpeg" (change)="uploadLogo($event)" /></div></div>
           </div></div></div>
