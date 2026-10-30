@@ -7,6 +7,7 @@ import { Paged } from '../core/models';
 import { ToastService } from '../core/toast.service';
 import { SHARED_PIPES } from '../shared/pipes';
 import { PagerComponent } from '../shared/ui';
+import { PushCardComponent } from '../shared/push-card';
 import { environment } from '../../environments/environment';
 
 interface EventInfo { key: string; label: string; audience: 'Customer' | 'Admin'; description: string; }
@@ -36,7 +37,7 @@ const PRESETS: Preset[] = [
 
 @Component({
   selector: 'wc-email-settings',
-  imports: [FormsModule, DatePipe, RouterLink, PagerComponent, ...SHARED_PIPES],
+  imports: [FormsModule, DatePipe, RouterLink, PagerComponent, PushCardComponent, ...SHARED_PIPES],
   styles: [`
     .preset { border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: .45rem .7rem; background: transparent; font-weight: 600; font-size: .85rem; }
     .preset.on { border-color: #9A5226; background: rgba(154, 82, 38,.08); color: #9A5226; }
@@ -92,6 +93,7 @@ const PRESETS: Preset[] = [
             </div>
 
             <div class="col-xl-4">
+              <wc-push-card />
               <div class="card mb-3"><div class="card-body">
                 <h5>Admin notification emails</h5>
                 <p class="text-muted fs-7">Everyone here gets the admin emails (new orders, payments, returns, enquiries…).</p>
