@@ -1,11 +1,12 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
-import { AdminImage, AdminVariant, Lookups, ProductDetail } from '../../core/models';
+import { AdminImage, AdminVariant, BusinessSettings, Lookups, ProductDetail } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { SHARED_PIPES } from '../../shared/pipes';
+import { ModalComponent } from '../../shared/ui';
 import { environment } from '../../../environments/environment';
 import { ProductOptionsComponent } from './product-options';
 import { SocialCardComponent } from '../social/social-card';
@@ -20,7 +21,7 @@ const blank = (): ProductDetail => ({
 
 @Component({
   selector: 'wc-product-edit',
-  imports: [FormsModule, RouterLink, DatePipe, ProductOptionsComponent, SocialCardComponent, ...SHARED_PIPES],
+  imports: [FormsModule, RouterLink, DatePipe, ProductOptionsComponent, SocialCardComponent, ModalComponent, ...SHARED_PIPES],
   templateUrl: './product-edit.html'
 })
 export class ProductEditPage {
@@ -35,6 +36,14 @@ export class ProductEditPage {
   protected saving = signal(false);
   protected tab = signal<'pricing' | 'options' | 'details' | 'seo'>('pricing');
   protected storefront = environment.storefrontUrl;
+  /** Add (image null) or replace a video: a YouTube link, or for a replacement also an MP4 file. */
+  protected video = signal<{ image: AdminImage | null; link: string; file: File | null } | null>(null);
+  protected busy = signal(false);
+  protected youTubeOff = signal(false);
+  protected pickLabel = signal('Woodsy pick');
+  /** Customers waiting for this product with "Notify me". */
+  protected waiting = signal(0);
+  protected hasYouTube = computed(() => !!this.p()?.images.some(i => this.isYouTube(i)));
 
   constructor() {
     this.api.get<Lookups>('admin/products/lookups').subscribe(l => {
@@ -42,9 +51,13 @@ export class ProductEditPage {
       const p = this.p();
       if (p && !p.categoryId && l.categories.length) p.categoryId = l.categories[0].id;
     });
+    this.api.get<BusinessSettings>('admin/settings').subscribe({ next: s => { this.youTubeOff.set(!s.showYouTubeVideos); this.pickLabel.set(s.pickLabel || 'Woodsy pick'); }, error: () => {} });
     effect(() => {
       const id = this.id();
-      if (id && id !== 'new') this.api.get<ProductDetail>(`admin/products/${id}`).subscribe(p => { this.p.set(p); this.calc(); });
+      if (id && id !== 'new') {
+        this.api.get<ProductDetail>(`admin/products/${id}`).subscribe(p => { this.p.set(p); this.calc(); });
+        this.api.get<unknown[]>('admin/stockalerts', { productId: id }).subscribe(list => this.waiting.set(list.length));
+      }
       else {
         const b = blank();
         const l = untracked(() => this.lookups());
@@ -115,6 +128,36 @@ export class ProductEditPage {
     if (!confirm('Remove this image? Content will be locked so vendor sync does not re-add it.')) return;
     const p = this.p()!;
     this.api.delete(`admin/products/images/${img.id}`).subscribe(() => this.p.set({ ...p, lockContent: true, images: p.images.filter(i => i.id !== img.id) }));
+  }
+
+  isYouTube(img: AdminImage) { return img.mediaType === 3 && /youtube\.com|youtu\.be/.test(img.url); }
+
+  openVideo(image: AdminImage | null) { this.video.set({ image, link: '', file: null }); }
+
+  saveVideo(v: { image: AdminImage | null; link: string; file: File | null }) {
+    const p = this.p()!;
+    const req = !v.image ? this.api.post<AdminImage[]>(`admin/products/${p.id}/videos`, { url: v.link.trim() })
+      : v.file ? this.api.upload<AdminImage[]>(`admin/products/images/${v.image.id}/video`, v.file)
+      : this.api.put<AdminImage[]>(`admin/products/images/${v.image.id}/video`, { url: v.link.trim() });
+    this.busy.set(true);
+    req.subscribe({
+      next: images => {
+        this.busy.set(false);
+        this.video.set(null);
+        this.p.set({ ...p, images, lockContent: p.lockContent || !!v.image });
+        this.toast.success(v.image ? 'Video replaced' : 'Video added');
+        if (!p.showYouTubeVideo && images.some(i => this.isYouTube(i))) this.toast.info('Turn on "Show the YouTube video on the store" when it is ready.');
+      },
+      error: () => this.busy.set(false)
+    });
+  }
+
+  setYouTube(show: boolean) {
+    const p = this.p()!;
+    this.api.put(`admin/products/${p.id}/youtube`, show).subscribe(() => {
+      this.p.set({ ...p, showYouTubeVideo: show });
+      this.toast.success(show ? 'YouTube video shown on the store' : 'YouTube video hidden from the store');
+    });
   }
 
   moveImage(img: AdminImage, dir: -1 | 1) {

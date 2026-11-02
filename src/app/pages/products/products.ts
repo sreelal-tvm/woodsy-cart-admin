@@ -39,9 +39,13 @@ import { SOCIAL_PLATFORMS, SocialPlatform, SocialQueueResult, SocialStatus, soci
         <option value="newest">Newest</option><option value="name">Name</option><option value="price">Price ↑</option>
         <option value="price_desc">Price ↓</option><option value="margin">Lowest margin</option><option value="sold">Best selling</option>
       </select>
-      <select class="form-select form-select-sm w-auto" [(ngModel)]="social" (change)="page.set(1); load()" title="Instagram / Facebook / Threads">
+      <select class="form-select form-select-sm w-auto" [(ngModel)]="social" (change)="page.set(1); load()" title="Instagram / Facebook / Threads / YouTube">
         <option [ngValue]="null">Social: all</option><option value="not-posted">Not posted</option><option value="posted">Posted</option>
         <option value="not-on-threads">Not on Threads</option><option value="out-of-date">Out of date</option><option value="queued">In queue</option><option value="failed">Failed</option>
+        <optgroup label="YouTube Shorts">
+          <option value="youtube-posted">On YouTube</option><option value="not-on-youtube">Not on YouTube</option>
+          <option value="youtube-queued">YouTube: in queue</option><option value="youtube-failed">YouTube: failed</option>
+        </optgroup>
       </select>
       @if (selected().size) {
         <div class="ms-auto d-flex flex-wrap gap-2 align-items-center">

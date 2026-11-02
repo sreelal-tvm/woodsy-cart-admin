@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../core/api.service';
-import { Coupon } from '../core/models';
+import { Coupon, WelcomeOfferAdmin, WelcomeOfferSettings } from '../core/models';
 import { ToastService } from '../core/toast.service';
 import { SHARED_PIPES } from '../shared/pipes';
 import { ModalComponent } from '../shared/ui';
@@ -16,6 +16,36 @@ import { ModalComponent } from '../shared/ui';
       <button class="btn btn-sm btn-primary" (click)="edit(null)"><i class="bi bi-plus-lg me-1"></i>New coupon</button>
     </div>
     <p class="page-subtitle">Discounts come out of your commission — keep them below your margin.</p>
+
+    @if (welcome(); as w) {
+      <div class="card mb-3"><div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+          <div>
+            <h5 class="mb-1"><i class="bi bi-gift me-1"></i>Welcome offer for new accounts</h5>
+            <div class="text-muted fs-7">A discount on the first order, for a limited time after signing up. Shown in the cart with a countdown, in the welcome
+              email, and a reminder goes a few hours before it ends (Email &amp; notifications → "Welcome offer ending"). Signed-out visitors see what they'd get.</div>
+          </div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="wo" [(ngModel)]="w.enabled" /><label class="form-check-label fw-bold" for="wo">On</label></div>
+        </div>
+        <div class="row g-2 align-items-end">
+          <div class="col-6 col-md-2"><label class="form-label">Code</label><input class="form-control text-uppercase font-monospace" [(ngModel)]="w.code" maxlength="30" /></div>
+          <div class="col-6 col-md-2"><label class="form-label">Type</label><select class="form-select" [(ngModel)]="w.discountType"><option value="Percent">Percent</option><option value="Flat">Flat ₹</option></select></div>
+          <div class="col-4 col-md-2"><label class="form-label">{{ w.discountType === 'Percent' ? 'Discount %' : 'Discount ₹' }}</label><input type="number" class="form-control" [(ngModel)]="w.value" /></div>
+          @if (w.discountType === 'Percent') { <div class="col-4 col-md-2"><label class="form-label">Max discount ₹</label><input type="number" class="form-control" [(ngModel)]="w.maxDiscount" placeholder="No cap" /></div> }
+          <div class="col-4 col-md-2"><label class="form-label">Min order ₹</label><input type="number" class="form-control" [(ngModel)]="w.minOrder" /></div>
+          <div class="col-6 col-md-2"><label class="form-label">Valid for</label>
+            <select class="form-select" [(ngModel)]="w.validHours">@for (h of hours; track h) { <option [ngValue]="h">{{ h }} hours</option> }</select></div>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+          <div class="fs-7 text-muted">
+            @if (stats(); as st) { {{ st.started }} {{ st.started === 1 ? 'account' : 'accounts' }} got it · {{ st.running }} running now · <b>{{ st.used }} used</b>@if (st.discount) { ({{ st.discount | inr }} given) } }
+          </div>
+          <button class="btn btn-sm btn-primary" [disabled]="savingWelcome()" (click)="saveWelcome()">Save welcome offer</button>
+        </div>
+        <div class="form-text mb-0">Only accounts created while it is on get it, and only if they haven't ordered before. It works only for the signed-in account, so the code can't be shared.</div>
+      </div></div>
+    }
+
     <div class="card">
       <div class="table-responsive">
         <table class="table align-middle">
@@ -65,7 +95,29 @@ export class CouponsPage {
   private toast = inject(ToastService);
   protected rows = signal<Coupon[]>([]);
   protected form = signal<Coupon | null>(null);
-  constructor() { this.load(); }
+  protected welcome = signal<WelcomeOfferSettings | null>(null);
+  protected stats = signal<WelcomeOfferAdmin['stats'] | null>(null);
+  protected savingWelcome = signal(false);
+  protected hours = [12, 24, 48, 72, 168];
+  constructor() {
+    this.load();
+    this.api.get<WelcomeOfferAdmin>('admin/coupons/welcome').subscribe(r => this.setWelcome(r));
+  }
+
+  private setWelcome(r: WelcomeOfferAdmin) {
+    if (!this.hours.includes(r.settings.validHours)) this.hours = [...this.hours, r.settings.validHours].sort((a, b) => a - b);
+    this.welcome.set({ ...r.settings });
+    this.stats.set(r.stats);
+  }
+
+  saveWelcome() {
+    const w = this.welcome()!;
+    this.savingWelcome.set(true);
+    this.api.put<WelcomeOfferAdmin>('admin/coupons/welcome', { ...w, maxDiscount: w.discountType === 'Percent' && w.maxDiscount ? w.maxDiscount : null }).subscribe({
+      next: r => { this.setWelcome(r); this.savingWelcome.set(false); this.toast.success(r.settings.enabled ? 'Welcome offer saved — new accounts get it' : 'Welcome offer saved (off)'); },
+      error: () => this.savingWelcome.set(false)
+    });
+  }
   load() { this.api.get<Coupon[]>('admin/coupons').subscribe(r => this.rows.set(r)); }
 
   edit(c: Coupon | null) {

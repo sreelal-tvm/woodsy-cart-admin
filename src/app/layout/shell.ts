@@ -50,7 +50,7 @@ export class ShellComponent {
     },
     {
       title: 'Marketing', items: [
-        { label: 'Festival offers', icon: 'bi-stars', link: '/offers' },
+        { label: 'Offers & flash deals', icon: 'bi-stars', link: '/offers' },
         { label: 'Coupons', icon: 'bi-ticket-perforated', link: '/coupons' },
         { label: 'Social media', icon: 'bi-instagram', link: '/social' },
         { label: 'Home banners', icon: 'bi-images', link: '/banners' }

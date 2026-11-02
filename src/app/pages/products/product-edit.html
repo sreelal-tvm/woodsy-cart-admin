@@ -41,16 +41,25 @@
 
       <div class="mb-4">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="mb-0">Display images</h5>
+          <h5 class="mb-0">Photos &amp; videos</h5>
           @if (p.id) {
-            <label class="btn btn-sm btn-soft-primary mb-0"><i class="bi bi-upload me-1"></i>Upload<input type="file" class="d-none" multiple accept="image/*,video/mp4" (change)="upload($event)" /></label>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-soft-primary" (click)="openVideo(null)"><i class="bi bi-youtube me-1"></i>Add YouTube link</button>
+              <label class="btn btn-sm btn-soft-primary mb-0"><i class="bi bi-upload me-1"></i>Upload photo / MP4<input type="file" class="d-none" multiple accept="image/*,video/mp4" (change)="upload($event)" /></label>
+            </div>
           }
         </div>
         @if (!p.id) { <div class="border rounded p-4 text-center text-muted fs-7">Save the product first, then upload images.</div> }
         <div class="d-flex flex-wrap gap-2">
           @for (img of p.images; track img.id; let i = $index) {
             <div class="position-relative border rounded p-1" style="width: 120px">
-              @if (img.mediaType === 3) {
+              @if (img.mediaType === 3) { <span class="badge-soft badge-soft-secondary position-absolute m-1" style="z-index: 1">{{ isYouTube(img) ? 'YouTube' : 'MP4' }}</span> }
+              @if (img.mediaType === 3 && isYouTube(img)) {
+                <a [href]="img.url" target="_blank" rel="noopener" class="d-block position-relative" title="Open on YouTube">
+                  <img [src]="img.thumbnailUrl" class="w-100 rounded" style="height: 110px; object-fit: cover" alt="" loading="lazy" />
+                  <i class="bi bi-youtube position-absolute top-50 start-50 translate-middle fs-2 text-danger"></i>
+                </a>
+              } @else if (img.mediaType === 3) {
                 <div class="d-flex align-items-center justify-content-center bg-body-tertiary rounded" style="height: 110px"><i class="bi bi-play-circle fs-2"></i></div>
               } @else {
                 <img [src]="(img.thumbnailUrl || img.url) | media" class="w-100 rounded" style="height: 110px; object-fit: cover" alt="" loading="lazy" />
@@ -59,12 +68,25 @@
                 <button class="btn btn-sm p-0 px-1" [disabled]="i === 0" (click)="moveImage(img, -1)"><i class="bi bi-arrow-left"></i></button>
                 @if (i === 0) { <span class="badge-soft badge-soft-primary">Cover</span> }
                 @if (img.variantId) { <span class="badge-soft badge-soft-info">Variant</span> }
+                @if (img.mediaType === 3) { <button class="btn btn-sm p-0 px-1" title="Replace video" (click)="openVideo(img)"><i class="bi bi-arrow-repeat"></i></button> }
                 <button class="btn btn-sm p-0 px-1 text-danger" (click)="removeImage(img)"><i class="bi bi-trash"></i></button>
                 <button class="btn btn-sm p-0 px-1" [disabled]="i === p.images.length - 1" (click)="moveImage(img, 1)"><i class="bi bi-arrow-right"></i></button>
               </div>
             </div>
           }
         </div>
+        @if (hasYouTube()) {
+          <div class="border rounded px-3 py-2 mt-2">
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" id="ytShow" [checked]="p.showYouTubeVideo" (change)="setYouTube($any($event.target).checked)" />
+              <label class="form-check-label" for="ytShow">Show the YouTube video on the store</label>
+            </div>
+            <div class="form-text mt-0">
+              Saved straight away. Turn it on once the video is on your own channel: <i class="bi bi-arrow-repeat"></i> replace the vendor's video with your link first.
+              @if (youTubeOff()) { <span class="text-warning d-block"><i class="bi bi-exclamation-triangle me-1"></i>YouTube videos are switched off for the whole store in Business settings → Products.</span> }
+            </div>
+          </div>
+        }
       </div>
 
       <div class="card">
@@ -200,7 +222,17 @@
           <h5 class="mb-3">Visibility</h5>
           <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="act" [(ngModel)]="p.isActive" /><label class="form-check-label" for="act">Published on store</label></div>
           <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="avl" [(ngModel)]="p.isAvailable" /><label class="form-check-label" for="avl">In stock</label></div>
+          @if (waiting()) {
+            <div class="fs-7 mb-2 ms-1"><i class="bi bi-bell-fill text-primary me-1"></i><a routerLink="/enquiries">{{ waiting() }} customer{{ waiting() === 1 ? '' : 's' }} waiting</a>
+              <span class="text-muted">: told automatically when it's in stock</span></div>
+          }
           <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="fea" [(ngModel)]="p.isFeatured" /><label class="form-check-label" for="fea">Featured on home page</label></div>
+          <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" id="pick" [(ngModel)]="p.isPick" />
+            <label class="form-check-label" for="pick">Show "{{ pickLabel() }}" label on the store</label></div>
+          <div class="form-text mt-0 mb-2 ms-1">
+            @if (p.isSellingFast) { <span class="text-danger fw-bold"><i class="bi bi-graph-up-arrow me-1"></i>Shows "Selling fast"</span> — {{ p.recentOrders }} orders recently, so this label is hidden. }
+            @else { Gives a slow product a push on product cards and its page. "Selling fast" shows by itself when real orders reach the level in Settings → Products{{ p.recentOrders ? ' (' + p.recentOrders + ' recent order' + (p.recentOrders === 1 ? '' : 's') + ' so far)' : '' }}. }
+          </div>
           @if (p.source === 'Vendor') {
             <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="lck" [(ngModel)]="p.lockContent" /><label class="form-check-label" for="lck">Lock content (sync updates price &amp; stock only)</label></div>
           }
@@ -218,4 +250,23 @@
       }
     </div>
   </div>
+}
+
+@if (video(); as v) {
+  <wc-modal [title]="v.image ? 'Replace video' : 'Add a YouTube video'" (closed)="video.set(null)">
+    <label class="form-label">YouTube link</label>
+    <input class="form-control" [(ngModel)]="v.link" placeholder="https://youtu.be/… or https://www.youtube.com/shorts/…" />
+    <div class="form-text">From your own channel: open the video on YouTube → Share → Copy link.</div>
+    @if (v.image) {
+      <div class="text-center text-muted fs-7 my-2">or</div>
+      <label class="form-label">Upload an MP4 to this website</label>
+      <input type="file" class="form-control" accept="video/mp4" (change)="v.file = $any($event.target).files?.[0] ?? null" />
+      <div class="form-text">Up to 95 MB. Plays on the product page without YouTube.</div>
+      <div class="alert alert-subtle-info py-2 fs-7 mt-3 mb-0">The new video takes the old one's place. Like deleting, this locks the product's content, so vendor sync updates only price and stock and won't bring the vendor's video back.</div>
+    }
+    <div footer>
+      <button class="btn btn-phoenix-secondary" (click)="video.set(null)">Cancel</button>
+      <button class="btn btn-primary" [disabled]="busy() || (!v.link.trim() && !v.file)" (click)="saveVideo(v)">{{ busy() ? 'Saving…' : v.image ? 'Replace' : 'Add video' }}</button>
+    </div>
+  </wc-modal>
 }

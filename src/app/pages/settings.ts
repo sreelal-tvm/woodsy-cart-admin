@@ -93,6 +93,42 @@ interface Staff { id: number; fullName: string; email: string; phone?: string; r
             <div class="col-12"><div class="alert alert-info py-2 fs-7 mb-0">Saving a new commission, rounding or the GST-inclusive switch reprices all products that don't have a manual price.</div></div>
           </div></div></div>
         }
+        @case ('products') {
+          <div class="card"><div class="card-body">
+            <div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" id="yt" [(ngModel)]="s.showYouTubeVideos" />
+              <label class="form-check-label fw-bold" for="yt">Show YouTube videos on product pages</label></div>
+            <div class="form-text mb-0">Each product also has its own switch under <b>Photos &amp; videos</b>, off until you turn it on. A video shows only when both are on.
+              Turn this off to hide every YouTube video at once. Photos and MP4 videos on this website are not affected.</div>
+          </div></div>
+          <div class="card mt-3"><div class="card-body">
+            <label class="form-label fw-bold" for="ls">Show "Only N left"</label>
+            <select id="ls" class="form-select" style="max-width: 320px" [(ngModel)]="s.lowStockBadgeAt">
+              <option [ngValue]="0">Never</option>
+              @for (n of [1, 2, 3, 4, 5]; track n) { <option [ngValue]="n">When {{ n }} or fewer are left</option> }
+            </select>
+            <div class="form-text mb-0">Uses the vendor's real stock count from the last sync (within 36 hours). Only some vendor products have a count —
+              the others never show it. Shown on product pages, product cards and in the cart; customers can't add more than are left.</div>
+          </div></div>
+          <div class="card mt-3"><div class="card-body">
+            <label class="form-label fw-bold" for="sf">Show "Selling fast"</label>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <select id="sf" class="form-select" style="max-width: 240px" [(ngModel)]="s.sellingFastOrders">
+                <option [ngValue]="0">Never</option>
+                @for (n of [2, 3, 5, 10, 20]; track n) { <option [ngValue]="n">At {{ n }} or more orders</option> }
+              </select>
+              @if (s.sellingFastOrders) {
+                <span class="fs-7">in the last</span>
+                <select class="form-select" style="max-width: 140px" [(ngModel)]="s.sellingFastDays">@for (d of [3, 7, 14, 30]; track d) { <option [ngValue]="d">{{ d }} days</option> }</select>
+              }
+            </div>
+            <div class="form-text">Counted from real orders only (paid or confirmed; cancelled and returned orders don't count), updated every hour.
+              Shown on product cards and product pages.</div>
+            <label class="form-label fw-bold mt-3" for="pl">Label for your own picks</label>
+            <input id="pl" class="form-control" style="max-width: 240px" maxlength="24" [(ngModel)]="s.pickLabel" />
+            <div class="form-text mb-0">Switch it on for any product on its page (under Visibility), for example one that isn't moving. It can't claim sales or
+              popularity ("selling fast", "bestseller", "trending"). India's dark-pattern rules ban false popularity, so those words come only from real orders.</div>
+          </div></div>
+        }
         @case ('maps') {
           <div class="row g-3">
             <div class="col-xl-5">
@@ -197,7 +233,7 @@ export class SettingsPage {
   private toast = inject(ToastService);
   protected tabs = [
     { key: 'business', label: 'Business' }, { key: 'tax', label: 'GST & invoices' }, { key: 'pricing', label: 'Pricing & commission' },
-    { key: 'checkout', label: 'Delivery & payments' }, { key: 'maps', label: 'Maps' }, { key: 'staff', label: 'Team & security' }
+    { key: 'checkout', label: 'Delivery & payments' }, { key: 'products', label: 'Products' }, { key: 'maps', label: 'Maps' }, { key: 'staff', label: 'Team & security' }
   ];
   protected tab = signal('business');
   protected s = signal<BusinessSettings | null>(null);

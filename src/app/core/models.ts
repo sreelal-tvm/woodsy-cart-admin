@@ -41,6 +41,9 @@ export interface ProductDetail {
   lastSyncedAt?: string; metaTitle?: string; metaDescription?: string; collectionIds: number[]; tagIds: number[];
   images: AdminImage[]; variants: AdminVariant[]; soldCount: number; ratingAverage: number; ratingCount: number;
   options?: AdminOption[];
+  showYouTubeVideo?: boolean;
+  /** Admin's own store label (BusinessSettings.pickLabel); isSellingFast/recentOrders come from real orders. */
+  isPick?: boolean; isSellingFast?: boolean; recentOrders?: number;
 }
 
 export interface Lookups {
@@ -183,4 +186,14 @@ export interface BusinessSettings {
   restrictToServiceablePincodes: boolean; defaultDeliveryDays: number; instagramUrl?: string; facebookUrl?: string; threadsUrl?: string; youtubeUrl?: string;
   createdAt?: string;
   mapsEnabled: boolean; googleMapsApiKey?: string | null;
+  showYouTubeVideos: boolean;
+  /** "Only N left" on the storefront at or below this vendor stock (1–5); 0 = off. */
+  lowStockBadgeAt: number;
+  /** "Selling fast" at this many orders in the last sellingFastDays days (0 = off). */
+  sellingFastOrders: number; sellingFastDays: number;
+  /** The label for products marked on their own page ("Woodsy pick"). */
+  pickLabel: string;
 }
+
+export interface WelcomeOfferSettings { enabled: boolean; code: string; discountType: 'Percent' | 'Flat'; value: number; maxDiscount?: number | null; minOrder: number; validHours: number; }
+export interface WelcomeOfferAdmin { settings: WelcomeOfferSettings; stats: { started: number; running: number; used: number; discount: number }; }
